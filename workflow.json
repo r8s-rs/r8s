@@ -1,0 +1,70 @@
+{
+  "workflow_id": "workflow_com_if_e_switch",
+  "start": "n1",
+  "nodes": {
+    "n1": {
+      "name": "Start",
+      "type": "manualTrigger",
+      "next": {
+        "default": "n2"
+      }
+    },
+    "n2": {
+      "name": "Definir idade",
+      "type": "set",
+      "params": {
+        "idade": 70
+      },
+      "next": {
+        "default": "n3"
+      }
+    },
+    "n3": {
+      "name": "Validação idade",
+      "type": "if",
+      "condition": "$json.idade > 0",
+      "next": {
+        "true": "n4",
+        "false": "n9"
+      }
+    },
+    "n4": {
+      "name": "Faixa etária",
+      "type": "switch",
+      "key": "$json.idade",
+      "cases": {
+        "0-17": "n5",
+        "18-64": "n6",
+        "65+": "n7"
+      }
+    },
+    "n5": {
+      "name": "Menor de idade",
+      "type": "set",
+      "params": {
+        "status": "menor"
+      }
+    },
+    "n6": {
+      "name": "Adulto",
+      "type": "set",
+      "params": {
+        "status": "adulto"
+      }
+    },
+    "n7": {
+      "name": "Idoso",
+      "type": "set",
+      "params": {
+        "status": "idoso"
+      }
+    },
+    "n9": {
+      "name": "Idade inválida",
+      "type": "set",
+      "params": {
+        "status": "erro_idade"
+      }
+    }
+  }
+}
