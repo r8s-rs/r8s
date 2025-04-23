@@ -1,25 +1,25 @@
 use serde::Deserialize;
 use crate::domain::workflow::{
-    ManualTriggerNode,
-    SetNode,
-    IfNode,
-    SwitchNode,
+    ManualTriggerV1Node,
+    SetV1Node,
+    IfV1Node,
+    SwitchV1Node,
 };
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
 pub enum NodeKind {
-    #[serde(rename = "manualTrigger")]
-    Manual(ManualTriggerNode),
+    #[serde(rename = "ManualTriggerV1")]
+    ManualTriggerV1(ManualTriggerV1Node),
 
-    #[serde(rename = "set")]
-    Set(SetNode),
+    #[serde(rename = "SetV1")]
+    SetV1(SetV1Node),
 
-    #[serde(rename = "if")]
-    If(IfNode),
+    #[serde(rename = "IfV1")]
+    IfV1(IfV1Node),
 
-    #[serde(rename = "switch")]
-    Switch(SwitchNode),
+    #[serde(rename = "SwitchV1")]
+    SwitchV1(SwitchV1Node),
 
     #[serde(other)]
     Unknown,

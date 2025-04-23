@@ -23,13 +23,13 @@ fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<St
     println!("🔹 Executando '{}'", node.name);
 
     match &node.kind {
-        NodeKind::Manual(_) => {
+        NodeKind::ManualTriggerV1(_) => {
             println!("   ➥ Manual Trigger");
             if let Some(next_id) = node.next.get("default") {
                 queue.push_back(next_id.clone());
             }
         }
-        NodeKind::Set(set_node) => {
+        NodeKind::SetV1(set_node) => {
             for (key, val) in &set_node.params {
                 ctx.memory.insert(key.clone(), val.clone());
             }
@@ -38,7 +38,7 @@ fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<St
                 queue.push_back(next_id.clone());
             }
         }
-        NodeKind::If(if_node) => {
+        NodeKind::IfV1(if_node) => {
             let cond = &if_node.condition;
             let var_name = cond.split('.').nth(1).unwrap_or("").split_whitespace().next().unwrap_or("");
             let comparison = cond.split('>').nth(1).unwrap_or("").trim().parse::<i64>().unwrap_or(0);
@@ -50,7 +50,7 @@ fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<St
                 queue.push_back(next_id.clone());
             }
         }
-        NodeKind::Switch(switch_node) => {
+        NodeKind::SwitchV1(switch_node) => {
             let key = switch_node.key.split('.').nth(1).unwrap_or("");
             let value = ctx.memory.get(key).and_then(|v| v.as_i64()).unwrap_or(0);
         

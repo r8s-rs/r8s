@@ -1,4 +1,6 @@
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
-pub struct ManualTriggerNode {}
+pub struct IfV1Node {
+    pub condition: String
+}

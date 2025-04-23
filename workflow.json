@@ -4,14 +4,14 @@
   "nodes": {
     "n1": {
       "name": "Start",
-      "type": "manualTrigger",
+      "type": "ManualTriggerV1",
       "next": {
         "default": "n2"
       }
     },
     "n2": {
       "name": "Definir idade",
-      "type": "set",
+      "type": "SetV1",
       "params": {
         "idade": 70
       },
@@ -21,7 +21,7 @@
     },
     "n3": {
       "name": "Validação idade",
-      "type": "if",
+      "type": "IfV1",
       "condition": "$json.idade > 0",
       "next": {
         "true": "n4",
@@ -30,7 +30,7 @@
     },
     "n4": {
       "name": "Faixa etária",
-      "type": "switch",
+      "type": "SwitchV1",
       "key": "$json.idade",
       "cases": {
         "0-17": "n5",
@@ -40,28 +40,28 @@
     },
     "n5": {
       "name": "Menor de idade",
-      "type": "set",
+      "type": "SetV1",
       "params": {
         "status": "menor"
       }
     },
     "n6": {
       "name": "Adulto",
-      "type": "set",
+      "type": "SetV1",
       "params": {
         "status": "adulto"
       }
     },
     "n7": {
       "name": "Idoso",
-      "type": "set",
+      "type": "SetV1",
       "params": {
         "status": "idoso"
       }
     },
     "n9": {
       "name": "Idade inválida",
-      "type": "set",
+      "type": "SetV1",
       "params": {
         "status": "erro_idade"
       }

@@ -1,9 +1,9 @@
-mod manual_trigger_node;
-mod switch_node;
-mod set_node;
-mod if_node;
+mod manual_trigger_v1_node;
+mod switch_v1_node;
+mod set_v1_node;
+mod if_v1_node;
 
-pub use manual_trigger_node::ManualTriggerNode;
-pub use switch_node::SwitchNode;
-pub use set_node::SetNode;
-pub use if_node::IfNode;
+pub use manual_trigger_v1_node::ManualTriggerV1Node;
+pub use switch_v1_node::SwitchV1Node;
+pub use set_v1_node::SetV1Node;
+pub use if_v1_node::IfV1Node;
