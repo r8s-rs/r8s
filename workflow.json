@@ -1,8 +1,8 @@
 {
   "workflow_id": "workflow_com_if_e_switch",
-  "start": "n1",
+  "start": "1",
   "nodes": {
-    "n1": {
+    "1": {
       "name": "Start",
       "type": "ManualTriggerV1",
       "next": {
