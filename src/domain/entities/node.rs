@@ -9,5 +9,5 @@ pub struct Node {
     #[serde(flatten)]
     pub kind: NodeKind,
     #[serde(default)]
-    pub next: HashMap<String, String>,
+    pub next: Vec<String>,
 }

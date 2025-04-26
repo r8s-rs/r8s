@@ -25,17 +25,20 @@ fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<St
     match &node.kind {
         NodeKind::ManualTriggerV1(_) => {
             println!("   ➥ Manual Trigger");
-            if let Some(next_id) = node.next.get("default") {
-                queue.push_back(next_id.clone());
+
+            for next_node in node.next.iter() {
+                queue.push_back(next_node.clone());
             }
         }
         NodeKind::SetV1(set_node) => {
             for (key, val) in &set_node.params {
                 ctx.memory.insert(key.clone(), val.clone());
             }
+
             println!("   ➥ Set vars: {:?}", set_node.params);
-            if let Some(next_id) = node.next.get("default") {
-                queue.push_back(next_id.clone());
+
+            for next_node in node.next.iter() {
+                queue.push_back(next_node.clone());
             }
         }
         NodeKind::IfV1(if_node) => {
@@ -46,9 +49,12 @@ fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<St
 
             let branch = if var_value > comparison { "true" } else { "false" };
             println!("   ➥ Condição '{}' avaliou para {}", cond, branch);
+
+            /*
             if let Some(next_id) = node.next.get(branch) {
                 queue.push_back(next_id.clone());
             }
+            */
         }
         NodeKind::SwitchV1(switch_node) => {
             let key = switch_node.key.split('.').nth(1).unwrap_or("");
@@ -64,6 +70,7 @@ fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<St
         
             println!("   ➥ Switch: valor '{}' mapeado para '{}'", value, next);
             if let Some(next_id) = switch_node.cases.get(next) {
+
                 queue.push_back(next_id.clone());
             }
         }
