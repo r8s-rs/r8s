@@ -5,63 +5,43 @@
     "1": {
       "name": "Start",
       "type": "ManualTriggerV1",
-      "next": {
-        "default": "n2"
-      }
+      "next": ["2"]
     },
-    "n2": {
+    "2": {
       "name": "Definir idade",
       "type": "SetV1",
       "params": {
         "idade": 70
       },
-      "next": {
-        "default": "n3"
-      }
+      "next": ["3"]
     },
-    "n3": {
-      "name": "Validação idade",
-      "type": "IfV1",
-      "condition": "$json.idade > 0",
-      "next": {
-        "true": "n4",
-        "false": "n9"
-      }
-    },
-    "n4": {
-      "name": "Faixa etária",
-      "type": "SwitchV1",
-      "key": "$json.idade",
-      "cases": {
-        "0-17": "n5",
-        "18-64": "n6",
-        "65+": "n7"
-      }
-    },
-    "n5": {
+    "5": {
       "name": "Menor de idade",
       "type": "SetV1",
+      "next": [],
       "params": {
         "status": "menor"
       }
     },
-    "n6": {
+    "6": {
       "name": "Adulto",
       "type": "SetV1",
       "params": {
         "status": "adulto"
       }
     },
-    "n7": {
+    "7": {
       "name": "Idoso",
       "type": "SetV1",
+      "next": [],
       "params": {
         "status": "idoso"
       }
     },
-    "n9": {
+    "9": {
       "name": "Idade inválida",
       "type": "SetV1",
+      "next": [],
       "params": {
         "status": "erro_idade"
       }
