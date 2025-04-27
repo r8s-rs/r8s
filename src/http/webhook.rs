@@ -1,5 +1,6 @@
+use crate::domain::entities::HttpRequest as HttpRequestEntity;
 use crate::infrastructure::repositories::WebhookRepository;
-use std::collections::HashMap;
+use std::{collections::HashMap, net::IpAddr};
 use serde_json::{Value, json};
 use futures_util::StreamExt;
 use crate::State;
@@ -36,7 +37,11 @@ pub async fn webhook(
         .to_string()
         .to_lowercase();
 
-    dbg!(path, &method);
+    let mut ip: Option<IpAddr> = None;
+
+    if let Some(peer_addr) = req.peer_addr() {
+        ip = Some(peer_addr.ip());
+    }
 
     let res = WebhookRepository::get_by_path(
         &state.db,
@@ -58,7 +63,7 @@ pub async fn webhook(
     }
 
     // Extrair parâmetros de consulta (query params)
-    let query: Value = json!(query.into_inner());
+    let query_params: Value = json!(query.into_inner());
     
     // Extrair dados de formulário, se houver
     let form_data: Value = match form {
@@ -94,20 +99,18 @@ pub async fn webhook(
             value.to_str().unwrap_or_default().to_string(),
         );
     }
-    
-    // Montar a resposta
-    let response = json!({
-        "success": true,
-        "request": {
-            "method": method,
-            "path": path,
-            "query": query,
-            "form_data": form_data,
-            "body": body,
-            "headers": headers
-        }
+
+    let mut wh_pendings = state.webhook_v1_pendings.try_lock().unwrap();
+
+    wh_pendings.push_back(HttpRequestEntity {
+        ip,
+        path: path.to_string(),
+        method,
+        headers,
+        form_data,
+        query_params,
+        body,
     });
-    
-    // Retornar resposta JSON
-    Ok(HttpResponse::Ok().json(response))
+
+    Ok(HttpResponse::Ok().json(json!({"success": true})))
 }

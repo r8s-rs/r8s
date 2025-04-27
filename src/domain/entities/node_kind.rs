@@ -1,6 +1,7 @@
 use serde::Deserialize;
 use crate::domain::workflow::{
     ManualTriggerV1Node,
+    WebhookV1Node,
     SetV1Node,
 };
 
@@ -12,6 +13,9 @@ pub enum NodeKind {
 
     #[serde(rename = "SetV1")]
     SetV1(SetV1Node),
+
+    #[serde(rename = "WebhookV1")]
+    WebhookV1(WebhookV1Node),
 
     #[serde(other)]
     Unknown,
