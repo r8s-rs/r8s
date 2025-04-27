@@ -12,7 +12,8 @@ CREATE TABLE "webhook"(
                 'head'
             )
         ) NOT NULL,
-        "workflow_id" TEXT NOT NULL
+    "workflow_id" TEXT NOT NULL,
+    "response_code" SMALLINT NOT NULL DEFAULT 200
 );
 ALTER TABLE
     "webhook" ADD PRIMARY KEY("path");

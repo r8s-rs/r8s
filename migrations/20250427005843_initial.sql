@@ -6,27 +6,29 @@ CREATE TABLE "workflow"(
     "active" BOOLEAN NOT NULL DEFAULT true,
     "settings" jsonb NOT NULL,
     "nodes" jsonb NOT NULL,
-    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
-    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 ALTER TABLE
     "workflow" ADD PRIMARY KEY("id");
+
+CREATE TYPE execution_status AS ENUM (
+    'queued',
+    'running',
+    'canceled',
+    'success',
+    'error',
+    'waiting'
+);
+
 CREATE TABLE "execution"(
     "id" BIGINT NOT NULL,
     "previous_execution_id" BIGINT NULL,
     "workflow_id" TEXT NOT NULL,
-    "status" VARCHAR(255) CHECK
-        (
-            "status" IN(
-                'queued',
-                'running',
-                'canceled',
-                'success',
-                'error',
-                'waiting'
-            )
-        ) NOT NULL,
-        "node_key" TEXT NOT NULL
+    "status" execution_status NOT NULL DEFAULT 'queued',
+    "node_key" TEXT NOT NULL,
+    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 ALTER TABLE
     "execution" ADD PRIMARY KEY("id");
