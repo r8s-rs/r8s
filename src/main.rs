@@ -1,16 +1,16 @@
 use actix_web::{App, HttpServer, web, middleware};
 use sqlx::postgres::PgPoolOptions;
-use std::env::var;
-mod domain;
-mod application;
-mod http;
-mod infrastructure;
-
 use application::State;
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex};
+use std::env::var;
+use actix::Actor;
 
-
-use application::executor::run_workflow;
-use infrastructure::reader::read_workflow;
+mod infrastructure;
+mod application;
+mod actors;
+mod domain;
+mod http;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -31,7 +31,17 @@ async fn main() -> std::io::Result<()> {
 
     let data = web::Data::new(State {
         db: pool.clone(),
+        webhook_v1_pendings: Arc::new(Mutex::new(VecDeque::new())),
+        workflow_pendings: Arc::new(Mutex::new(VecDeque::new())),
     });
+
+    actors::WorkflowToQueue {
+        state: data.clone(),
+    }.start();
+
+    actors::WebhookV1ToWorkflow {
+        state: data.clone(),
+    }.start();
 
     let port = std::env::var("R8S_HTTP_PORT").unwrap_or("5000".to_string()).parse::<u16>().unwrap();
 
