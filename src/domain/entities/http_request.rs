@@ -7,8 +7,8 @@ pub struct HttpRequest {
     pub ip: Option<IpAddr>,
     pub path: String,
     pub method: String,
-    pub headers: HashMap<String, String>,
-    pub query_params: Value,
-    pub form_data: Value,
-    pub body: Value,
+    pub headers: Option<HashMap<String, String>>,
+    pub query_params: Option<Value>,
+    pub form_data: Option<Value>,
+    pub body: Option<Value>,
 }

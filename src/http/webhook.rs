@@ -64,31 +64,44 @@ pub async fn webhook(
 
     // Extrair parâmetros de consulta (query params)
     let query_params: Value = json!(query.into_inner());
-    
+
+    let query_params = match query_params {
+        Value::Null => None,
+        Value::Object(ref map) if map.is_empty() => None,
+        Value::Array(ref arr) if arr.is_empty() => None,
+        Value::String(ref s) if s.is_empty() => None,
+        value => Some(value),
+    };
+
     // Extrair dados de formulário, se houver
-    let form_data: Value = match form {
-        Some(form_data) => json!(form_data.into_inner()),
-        None => json!({}),
+    let form_data: Option<Value> = match form {
+        Some(form_data) => Some(json!(form_data.into_inner())),
+        None => None,
     };
     
     // Extrair corpo da requisição (JSON body)
     let mut body_bytes = BytesMut::new();
+
     while let Some(chunk) = payload.next().await {
         let chunk = chunk?;
         body_bytes.extend_from_slice(&chunk);
     }
     
     // Tentar converter o corpo para JSON
-    let body: Value = if !body_bytes.is_empty() {
+    let body: Option<Value> = if !body_bytes.is_empty() {
         match serde_json::from_slice(&body_bytes) {
             Ok(json_body) => json_body,
             Err(_) => {
                 // Se não for JSON válido, retornar como string
-                json!(String::from_utf8_lossy(&body_bytes).to_string())
+                Some(
+                    json!(
+                        String::from_utf8_lossy(&body_bytes).to_string()
+                    )
+                )
             }
         }
     } else {
-        json!({})
+        None
     };
     
     // Extrair headers
@@ -99,6 +112,12 @@ pub async fn webhook(
             value.to_str().unwrap_or_default().to_string(),
         );
     }
+
+    let headers = if headers.is_empty() {
+        None
+    } else {
+        Some(headers)
+    };
 
     let mut wh_pendings = state.webhook_v1_pendings.try_lock().unwrap();
 

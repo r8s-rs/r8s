@@ -9,5 +9,5 @@ pub struct Request {
     pub method: String,
     pub headers: HashMap<String, String>,
     pub query_params: HashMap<String, String>,
-    pub form_data: Value,
+    pub form_data: Option<Value>,
 }
