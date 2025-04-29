@@ -1,0 +1,50 @@
+{
+  "workflow_id": "workflow_com_if_e_switch",
+  "start": "1",
+  "nodes": {
+    "1": {
+      "name": "Start",
+      "type": "ManualTriggerV1",
+      "next": ["2"]
+    },
+    "2": {
+      "name": "Definir idade",
+      "type": "SetV1",
+      "params": {
+        "idade": 70
+      },
+      "next": ["3"]
+    },
+    "5": {
+      "name": "Menor de idade",
+      "type": "SetV1",
+      "next": [],
+      "params": {
+        "status": "menor"
+      }
+    },
+    "6": {
+      "name": "Adulto",
+      "type": "SetV1",
+      "params": {
+        "status": "adulto"
+      }
+    },
+    "7": {
+      "name": "Idoso",
+      "type": "SetV1",
+      "next": [],
+      "params": {
+        "status": "idoso"
+      }
+    },
+    "9": {
+      "name": "Idade inválida",
+      "type": "SetV1",
+      "next": [],
+      "params": {
+        "status": "erro_idade"
+      }
+    }
+  }
+}
