@@ -6,12 +6,15 @@ edition = "2024"
 [dependencies]
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.140", features = ["raw_value"] }
-sqlx = { version = "0.8", features = ["runtime-tokio-native-tls", "postgres", "runtime-tokio", "json", "derive"] }
+sqlx = { version = "0.8", features = ["runtime-tokio-native-tls", "postgres", "runtime-tokio", "json", "derive", "chrono"] }
 actix-web = "4.9.0"
 log = "0.4.22"
 env_logger = "0.11.6"
 futures-util = "0.3.31"
 actix = "0.13.5"
+anyhow = "1.0.98"
+futures = "0.3.31"
+chrono = "0.4.41"
 
 [profile.release]
 strip = true
