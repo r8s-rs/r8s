@@ -1,9 +1,11 @@
+mod edge_condition;
 mod http_request;
 mod node_kind;
-mod workflow;
+mod node_base;
 mod node;
 
+pub use edge_condition::EdgeCondition;
 pub use http_request::HttpRequest;
 pub use node_kind::NodeKind;
-pub use workflow::Workflow;
+pub use node_base::NodeBase;
 pub use node::Node;

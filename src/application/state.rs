@@ -1,4 +1,5 @@
-use crate::domain::entities::{Workflow, HttpRequest};
+use crate::infrastructure::repositories::Workflow;
+use crate::domain::entities::HttpRequest;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use sqlx::{Postgres, Pool};
