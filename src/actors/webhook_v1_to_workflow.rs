@@ -16,6 +16,7 @@ impl Actor for WebhookV1ToWorkflow {
         let mut webhook_v1_pendings = self.state.webhook_v1_pendings.clone();
 
         ctx.run_interval(Duration::from_secs(10), move |_actor, _ctx| {
+            
             println!("[WebhookV1ToWorkflow] Executando tarefa a cada 30 segundos...");
             // Sua lógica de tarefa recorrente aqui
 
