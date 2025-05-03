@@ -18,8 +18,22 @@ impl WorkflowHttp {
 
         info!("Saving workflow [{}]", wf.pub_id);
 
-        let _ = WorkflowRepository::insert(&state.db, &wf).await;
+        match state.db.begin().await {
+            Ok(mut tx) => {
+                match WorkflowRepository::insert(&mut tx, &wf).await {
+                    Ok(_) => {
+                        let _ = tx.commit().await;
 
-        HttpResponse::Ok().finish()
+                        HttpResponse::Ok().finish()
+                    }
+                    Err(e) => {
+                        let _ = tx.rollback().await;
+
+                        HttpResponse::InternalServerError().body(e.to_string())
+                    }
+                }
+            },
+            Err(e) => HttpResponse::InternalServerError().body(e.to_string())
+        }
     }
 }

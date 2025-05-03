@@ -1,16 +1,19 @@
 use actix_web::{App, HttpServer, web, middleware};
 use sqlx::postgres::PgPoolOptions;
-use application::State;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
+use application::State;
 use std::env::var;
 use actix::Actor;
 
 mod infrastructure;
 mod application;
+//mod execucao2;
 mod actors;
 mod domain;
 mod http;
+//mod execucao;
+mod executador;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -43,6 +46,8 @@ async fn main() -> std::io::Result<()> {
         state: data.clone(),
     }.start();
 
+    //executador::enqueue_next_nodes(&pool, 1, 119, None).await;
+
     let port = std::env::var("R8S_HTTP_PORT").unwrap_or("5000".to_string()).parse::<u16>().unwrap();
 
     HttpServer::new(move || {
@@ -51,9 +56,14 @@ async fn main() -> std::io::Result<()> {
             .app_data(data.clone())
             .service(
                 web::resource("/wh/{path:.*}")
-                    .route(web::route()
-                    .to(http::webhook::webhook))
-        )
+                    .route(
+                        web::route()
+                        .to(http::webhook_http::webhook_http)
+                    )
+            ).service(
+                web::resource("/wf")
+                    .post(http::WorkflowHttp::store)
+            )
     })
     .bind(("0.0.0.0", port))?
     .run()
