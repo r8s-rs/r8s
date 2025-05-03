@@ -8,14 +8,14 @@ impl WebhookRepository {
         sqlx::query_as!(
             Webhook,
             r#"
-                select
-                    response_code,
-                    workflow_id
-                from
-                    webhook
-                where
-                    path = $1
-                    and method = $2
+            select
+                response_code,
+                workflow_id
+            from
+                webhook
+            where
+                path = $1
+                and method = $2
             "#,
             path,
             method,
