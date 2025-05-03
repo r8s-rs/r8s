@@ -1,4 +1,4 @@
-use crate::domain::entities::Workflow;
+use crate::infrastructure::repositories::Workflow;
 use std::fs;
 
 pub fn read_workflow(path: &str) -> Workflow {

@@ -1,4 +1,5 @@
+#[derive(Debug)]
 pub struct Webhook {
     pub response_code: i16,
-    pub workflow_id: String,
+    pub workflow_id: i64,
 }
