@@ -21,7 +21,7 @@ use actix_web::{
 
 
 // Handler que processa todos os tipos de requisições HTTP
-pub async fn webhook(
+pub async fn webhook_http(
     path: Path<String>,
     req: HttpRequest,
     query: Query<HashMap<String, String>>,
@@ -36,6 +36,10 @@ pub async fn webhook(
     let method = req.method()
         .to_string()
         .to_lowercase();
+
+    let host = req.connection_info();
+
+    let host = host.host();
 
     let mut ip: Option<IpAddr> = None;
 
@@ -122,8 +126,9 @@ pub async fn webhook(
     let mut wh_pendings = state.webhook_v1_pendings.try_lock().unwrap();
 
     wh_pendings.push_back(HttpRequestEntity {
+        host: host.into(),
         ip,
-        path: path.to_string(),
+        path: path.into(),
         method,
         headers,
         form_data,
