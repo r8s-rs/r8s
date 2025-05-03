@@ -12,10 +12,12 @@ CREATE TABLE "webhook"(
                 'head'
             )
         ) NOT NULL,
-    "workflow_id" TEXT NOT NULL,
+    "workflow_id" BIGINT NOT NULL,
     "response_code" SMALLINT NOT NULL DEFAULT 200
 );
 ALTER TABLE
     "webhook" ADD PRIMARY KEY("path");
 ALTER TABLE
     "webhook" ADD CONSTRAINT "webhook_workflow_id_foreign" FOREIGN KEY("workflow_id") REFERENCES "workflow"("id");
+
+CREATE INDEX idx_webhook_path_method ON webhook (path, method);

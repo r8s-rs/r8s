@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            insert into workflow (\n                pub_id,\n                name,\n                description\n            ) values (\n                $1,\n                $2,\n                $3\n            ) returning id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "59308c6e7d7ddd54eedb5068f0815403516d7074656e1574a932a6d18f76ff10"
+}

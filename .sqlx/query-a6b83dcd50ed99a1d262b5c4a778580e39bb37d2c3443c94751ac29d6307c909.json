@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update workflow set pub_id = null where pub_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a6b83dcd50ed99a1d262b5c4a778580e39bb37d2c3443c94751ac29d6307c909"
+}
