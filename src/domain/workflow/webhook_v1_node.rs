@@ -1,19 +1,22 @@
-use crate::{application::State, domain::entities::Workflow};
+use crate::application::State;
 use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
-use std::sync::Mutex;
-pub use request::Request;
 mod request;
+use crate::domain::entities::NodeBase;
 
-
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct WebhookV1Node {
-    pub request: Request,
-    pub next: Vec<String>,
+    //pub request: Request,
+    pub next: Option<Vec<String>>,
+}
+
+impl NodeBase for WebhookV1Node {
+    fn get_type(&self) -> &'static str {
+        "WebhookV1"
+    }
 }
 
 impl WebhookV1Node {
-    pub async fn to_queue(self, state: &State) {
+    pub async fn to_queue(self, _state: &State) {
         
     }
 }
