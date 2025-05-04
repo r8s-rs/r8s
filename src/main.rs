@@ -33,7 +33,10 @@ async fn main() -> std::io::Result<()> {
     let keyspace = Arc::new(keyspace);
 
     let partitions = application::Partitions {
-        webhook_v1_pendings: keyspace.open_partition("my_items", PartitionCreateOptions::default()).expect("Não foi possível abrir a partição")
+        webhook_v1_pendings: keyspace.open_partition(
+            domain::entities::partitions::WEBHOOK_V1_PENDINGS,
+            PartitionCreateOptions::default(),
+        ).expect("Não foi possível abrir a partição")
     };
 
     let partitions = Arc::new(partitions);
