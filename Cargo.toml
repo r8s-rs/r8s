@@ -15,6 +15,8 @@ actix = "0.13.5"
 anyhow = "1.0.98"
 futures = "0.3.31"
 chrono = "0.4.41"
+fjall = "2.6.3"
+nanoid = "0.4.0"
 
 [profile.release]
 strip = true

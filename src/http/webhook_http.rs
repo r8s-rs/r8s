@@ -3,6 +3,8 @@ use crate::infrastructure::repositories::WebhookRepository;
 use std::{collections::HashMap, net::IpAddr};
 use serde_json::{Value, json};
 use futures_util::StreamExt;
+use log::{info, error};
+use nanoid::nanoid;
 use crate::State;
 use actix_web::{
     HttpResponse,
@@ -124,13 +126,9 @@ pub async fn webhook_http(
         Some(headers)
     };
 
-    let mut wh_pendings = state.webhook_v1_pendings.try_lock().unwrap();
-
     let wh = res.unwrap();
 
-    wh_pendings.entry(wh.workflow_id).or_insert(vec![].into());
-
-    wh_pendings.get_mut(&wh.workflow_id).unwrap().push_back(HttpRequestEntity {
+    let http_request = HttpRequestEntity {
         host: host.into(),
         ip,
         path: path.into(),
@@ -139,7 +137,25 @@ pub async fn webhook_http(
         form_data,
         query_params,
         body,
-    });
+    };
+
+    let id = format!("{}/{}", wh.workflow_id, nanoid!(10));
+
+    let id = id.as_str();
+
+    let insert = state.partitions.webhook_v1_pendings.insert(
+        id,
+        serde_json::to_vec(&http_request).unwrap(),
+    );
+
+    match insert {
+        Ok(()) => {
+            info!("Sucesso ao inserir webhook na partition");
+        }
+        Err(e) => {
+            error!("Erro ao inserir webhook na partition: {e}");
+        }
+    }
 
     Ok(HttpResponse::Ok().json(json!({"success": true})))
 }

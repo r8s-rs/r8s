@@ -1,3 +1,4 @@
+pub mod partitions;
 mod edge_condition;
 mod http_request;
 mod node_kind;

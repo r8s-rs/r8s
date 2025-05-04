@@ -1,7 +1,6 @@
 
 use sqlx::{PgPool, Error, Transaction, Postgres};
 use crate::domain::entities::HttpRequest;
-use std::collections::VecDeque;
 use serde_json::json;
 use super::Webhook;
 
@@ -31,7 +30,7 @@ impl WebhookRepository {
     pub async fn insert_executions(
         tx: &mut Transaction<'_, Postgres>,
         wf_id: i64,
-        objs: &VecDeque<HttpRequest>,
+        objs: &Vec<HttpRequest>,
     ) -> Result<(), Error> {
         if objs.is_empty() {
             return Ok(());
