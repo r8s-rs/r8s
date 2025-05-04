@@ -28,24 +28,31 @@ impl WebhookRepository {
         ).await
     }
 
-    pub async fn insert_execution(tx: &mut Transaction<'_, Postgres>, wf_id: i64, objs: &VecDeque<HttpRequest>) -> Result<(), Error> {
-        for item in objs {
-            sqlx::query!(
-                r#"
-                insert into execution (
-                    workflow_id,
-                    input
-                ) values (
-                    $1,
-                    $2
-                ) returning id
-                "#,
-                wf_id,
-                json!(item),
-            )
-            .fetch_one(&mut **tx)
-            .await?;
+    pub async fn insert_executions(
+        tx: &mut Transaction<'_, Postgres>,
+        wf_id: i64,
+        objs: &VecDeque<HttpRequest>,
+    ) -> Result<(), Error> {
+        if objs.is_empty() {
+            return Ok(());
         }
+
+        // Serializa em um vetor de JSONs
+        let inputs: Vec<serde_json::Value> = objs.iter().map(|item| json!(item)).collect();
+
+        // Executa em lote
+        sqlx::query!(
+            r#"
+            insert into execution (workflow_id, input)
+            select
+                $1 as workflow_id,
+                unnest($2::jsonb[]) as input
+            "#,
+            wf_id,
+            &inputs as &[serde_json::Value],
+        )
+        .execute(&mut **tx)
+        .await?;
 
         Ok(())
     }
