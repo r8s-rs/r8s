@@ -1,6 +1,6 @@
 use actix_web::{App, HttpServer, web, middleware};
+use std::collections::{VecDeque, BTreeMap};
 use sqlx::postgres::PgPoolOptions;
-use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use application::State;
 use std::env::var;
@@ -34,7 +34,7 @@ async fn main() -> std::io::Result<()> {
 
     let data = web::Data::new(State {
         db: pool.clone(),
-        webhook_v1_pendings: Arc::new(Mutex::new(VecDeque::new())),
+        webhook_v1_pendings: Arc::new(Mutex::new(BTreeMap::new())),
         workflow_pendings: Arc::new(Mutex::new(VecDeque::new())),
     });
 

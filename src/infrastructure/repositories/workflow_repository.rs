@@ -9,6 +9,22 @@ type MapEdges = BTreeMap<i64, i64>;
 pub struct WorkflowRepository;
 
 impl WorkflowRepository {
+    pub async fn exists_by_id(tx: &mut Transaction<'_, Postgres>, id: i64) -> Result<bool, Error> {
+        let exists = sqlx::query_scalar!(
+            r#"
+            select
+                exists(
+                    select 1 from workflow where id = $1
+                ) as exists
+            "#,
+            id,
+        )
+        .fetch_one(&mut **tx)
+        .await?;
+
+        Ok(exists.unwrap())
+    }
+
     pub async fn insert(tx: &mut Transaction<'_, Postgres>, wf: &Workflow) -> Result<(), Error> {
         sqlx::query!(
             "update workflow set pub_id = null where pub_id = $1",

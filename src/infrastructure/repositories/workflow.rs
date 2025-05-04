@@ -4,6 +4,8 @@ use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Workflow {
+    #[serde(default)]
+    pub id: Option<i64>,
     pub pub_id: String,
     pub name: Option<String>,
     pub description: Option<String>,

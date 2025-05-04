@@ -126,7 +126,11 @@ pub async fn webhook_http(
 
     let mut wh_pendings = state.webhook_v1_pendings.try_lock().unwrap();
 
-    wh_pendings.push_back(HttpRequestEntity {
+    let wh = res.unwrap();
+
+    wh_pendings.entry(wh.workflow_id).or_insert(vec![].into());
+
+    wh_pendings.get_mut(&wh.workflow_id).unwrap().push_back(HttpRequestEntity {
         host: host.into(),
         ip,
         path: path.into(),
