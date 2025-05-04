@@ -21,7 +21,7 @@ impl Actor for WebhookV1ToExecution {
 
         let partitions = self.state.partitions.clone();
 
-        ctx.run_interval(Duration::from_secs(10), move |_actor, _ctx| {
+        ctx.run_interval(Duration::from_secs(30), move |_actor, _ctx| {
             let db = db.clone();
             let webhook_v1_pendings = partitions.webhook_v1_pendings.clone();
 
