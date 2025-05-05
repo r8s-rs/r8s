@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                        insert into edge (\n                            from_node_id,\n                            to_node_id,\n                            condition\n                        ) values (\n                            $1,\n                            $2,\n                            $3\n                        )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "30aaa9a0189d3ac690dbb1d8e6d882d2513cfbded8e36528098f61028e2c09bf"
+}

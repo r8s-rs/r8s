@@ -1,0 +1,1 @@
+pub const WEBHOOK_V1_PENDINGS: &str = "webhook_v1_pendings";

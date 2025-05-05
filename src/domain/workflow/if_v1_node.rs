@@ -1,11 +1,17 @@
 use crate::domain::entities::NodeBase;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct ManualTriggerV1Node;
+pub struct IfV1Node {
+    pub next: Option<Vec<String>>,
+    #[serde(default)]
+    pub data: Value,
+}
 
-impl NodeBase for ManualTriggerV1Node {
+impl NodeBase for IfV1Node {
     fn get_type(&self) -> &'static str {
-        "SetV1"
+        "IfV1"
     }
 }

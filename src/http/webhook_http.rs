@@ -1,8 +1,11 @@
+use crate::infrastructure::repositories::{WebhookRepository, WebhookMethod};
 use crate::domain::entities::HttpRequest as HttpRequestEntity;
-use crate::infrastructure::repositories::WebhookRepository;
 use std::{collections::HashMap, net::IpAddr};
 use serde_json::{Value, json};
 use futures_util::StreamExt;
+use log::{info, error};
+use std::str::FromStr;
+use nanoid::nanoid;
 use crate::State;
 use actix_web::{
     HttpResponse,
@@ -21,7 +24,7 @@ use actix_web::{
 
 
 // Handler que processa todos os tipos de requisições HTTP
-pub async fn webhook(
+pub async fn webhook_http(
     path: Path<String>,
     req: HttpRequest,
     query: Query<HashMap<String, String>>,
@@ -36,6 +39,18 @@ pub async fn webhook(
     let method = req.method()
         .to_string()
         .to_lowercase();
+
+    let method = WebhookMethod::from_str(method.as_str());
+
+    if method.is_err() {
+        return Ok(HttpResponse::BadGateway().body("method not found"));
+    }
+
+    let method = method.unwrap();
+
+    let host = req.connection_info();
+
+    let host = host.host();
 
     let mut ip: Option<IpAddr> = None;
 
@@ -59,6 +74,7 @@ pub async fn webhook(
     let res = res.unwrap();
 
     if res.is_none() {
+        dbg!(res);
         return Ok(HttpResponse::NotFound().body("not found"));
     }
 
@@ -119,17 +135,36 @@ pub async fn webhook(
         Some(headers)
     };
 
-    let mut wh_pendings = state.webhook_v1_pendings.try_lock().unwrap();
+    let wh = res.unwrap();
 
-    wh_pendings.push_back(HttpRequestEntity {
+    let http_request = HttpRequestEntity {
+        host: host.into(),
         ip,
-        path: path.to_string(),
-        method,
+        path: path.into(),
+        method: method.to_string(),
         headers,
         form_data,
         query_params,
         body,
-    });
+    };
+
+    let id = format!("{}/{}", wh.workflow_id, nanoid!(10));
+
+    let id = id.as_str();
+
+    let insert = state.partitions.webhook_v1_pendings.insert(
+        id,
+        serde_json::to_vec(&http_request).unwrap(),
+    );
+
+    match insert {
+        Ok(()) => {
+            info!("Sucesso ao inserir webhook na partition");
+        }
+        Err(e) => {
+            error!("Erro ao inserir webhook na partition: {e}");
+        }
+    }
 
     Ok(HttpResponse::Ok().json(json!({"success": true})))
 }

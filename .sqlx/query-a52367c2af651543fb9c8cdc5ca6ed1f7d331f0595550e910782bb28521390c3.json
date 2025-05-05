@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            insert into execution (workflow_id, input)\n            select\n                $1 as workflow_id,\n                unnest($2::jsonb[]) as input\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "JsonbArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a52367c2af651543fb9c8cdc5ca6ed1f7d331f0595550e910782bb28521390c3"
+}

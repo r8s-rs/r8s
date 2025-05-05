@@ -1,8 +1,11 @@
 use actix_web::{App, HttpServer, web, middleware};
+use fjall::{Config, PartitionCreateOptions};
 use sqlx::postgres::PgPoolOptions;
-use application::State;
 use std::collections::VecDeque;
+use std::fs::create_dir_all;
 use std::sync::{Arc, Mutex};
+use application::State;
+use log::{info, error};
 use std::env::var;
 use actix::Actor;
 
@@ -11,10 +14,32 @@ mod application;
 mod actors;
 mod domain;
 mod http;
+mod executador;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
+
+    let base_path = infrastructure::repositories::FileRepository::get_base_path();
+
+    let fjall_path = infrastructure::repositories::FileRepository::get_fjall_path();
+
+    info!("As configurações/filas do r8s estão sendo salvas em [{base_path}]");
+
+    let _ = create_dir_all(base_path);
+
+    let keyspace = Config::new(fjall_path).open().expect("Não foi possível criar o keyspace fjall");
+
+    let keyspace = Arc::new(keyspace);
+
+    let partitions = application::Partitions {
+        webhook_v1_pendings: keyspace.open_partition(
+            domain::entities::partitions::WEBHOOK_V1_PENDINGS,
+            PartitionCreateOptions::default(),
+        ).expect("Não foi possível abrir a partição")
+    };
+
+    let partitions = Arc::new(partitions);
 
     let pool = PgPoolOptions::new()
         .max_connections(
@@ -29,9 +54,15 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to connect to database");
 
+    match sqlx::migrate!().run(&pool).await {
+        Ok(()) => info!("As migrações foram aplicadas!"),
+        Err(e) => error!("Falha ao aplicar migrações {e}")
+    }
+
     let data = web::Data::new(State {
         db: pool.clone(),
-        webhook_v1_pendings: Arc::new(Mutex::new(VecDeque::new())),
+        keyspace: keyspace.clone(),
+        partitions: partitions,
         workflow_pendings: Arc::new(Mutex::new(VecDeque::new())),
     });
 
@@ -39,7 +70,7 @@ async fn main() -> std::io::Result<()> {
         state: data.clone(),
     }.start();
 
-    actors::WebhookV1ToWorkflow {
+    actors::WebhookV1ToExecution {
         state: data.clone(),
     }.start();
 
@@ -51,9 +82,14 @@ async fn main() -> std::io::Result<()> {
             .app_data(data.clone())
             .service(
                 web::resource("/wh/{path:.*}")
-                    .route(web::route()
-                    .to(http::webhook::webhook))
-        )
+                    .route(
+                        web::route()
+                        .to(http::webhook_http::webhook_http)
+                    )
+            ).service(
+                web::resource("/wf")
+                    .post(http::WorkflowHttp::store)
+            )
     })
     .bind(("0.0.0.0", port))?
     .run()

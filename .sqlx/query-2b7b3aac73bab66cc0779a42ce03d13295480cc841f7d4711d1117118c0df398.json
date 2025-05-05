@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT to_node_id, condition\n        FROM edge\n        WHERE from_node_id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "to_node_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "condition",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "2b7b3aac73bab66cc0779a42ce03d13295480cc841f7d4711d1117118c0df398"
+}

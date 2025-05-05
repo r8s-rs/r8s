@@ -1,5 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use crate::domain::entities::*;
+use crate::infrastructure::repositories::Workflow;
 
 #[derive(Default)]
 pub struct ExecutionContext {
@@ -8,7 +9,7 @@ pub struct ExecutionContext {
 
 pub fn run_workflow(workflow: &Workflow) {
     let mut queue = VecDeque::new();
-    queue.push_back(workflow.start.clone());
+    queue.push_back("1".to_string());
     let mut context = ExecutionContext::default();
 
     while let Some(current_id) = queue.pop_front() {
@@ -24,11 +25,13 @@ pub fn run_workflow(workflow: &Workflow) {
 fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<String>) {
     println!("🔹 Executando '{}'", node.name);
 
+
+
     match &node.kind {
         NodeKind::ManualTriggerV1(_) => {
             println!("   ➥ Manual Trigger");
 
-            for next_node in node.next.iter() {
+            for next_node in node.next.as_ref().unwrap().iter() {
                 queue.push_back(next_node.clone());
             }
         }
@@ -38,9 +41,12 @@ fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<St
         NodeKind::SetV1(set_node) => {
             println!("   ➥ Set vars: {:?}", set_node.data);
 
-            for next_node in node.next.iter() {
+            for next_node in node.next.as_ref().unwrap().iter() {
                 queue.push_back(next_node.clone());
             }
+        }
+        NodeKind::IfV1(node) => {
+            //
         }
         NodeKind::Unknown => println!("⚠️  Tipo desconhecido"),
     }

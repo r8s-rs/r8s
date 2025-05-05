@@ -1,16 +1,28 @@
--- Add migration script here
-CREATE TABLE "workflow"(
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "active" BOOLEAN NOT NULL DEFAULT true,
-    "settings" jsonb NOT NULL,
-    "nodes" jsonb NOT NULL,
-    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now()
+CREATE TABLE workflow (
+    id BIGSERIAL PRIMARY KEY,
+    pub_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
 );
-ALTER TABLE
-    "workflow" ADD PRIMARY KEY("id");
+
+CREATE TABLE node (
+    id BIGSERIAL PRIMARY KEY,
+    workflow_id BIGINT NOT NULL REFERENCES workflow(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    data JSONB,
+    position_x NUMERIC NOT NULL DEFAULT 0,
+    position_y NUMERIC NOT NULL DEFAULT 0
+);
+
+CREATE TABLE edge (
+    from_node_id BIGINT NOT NULL REFERENCES node(id) ON DELETE CASCADE,
+    to_node_id BIGINT NOT NULL REFERENCES node(id) ON DELETE CASCADE,
+    PRIMARY KEY (from_node_id, to_node_id)
+);
 
 CREATE TYPE execution_status AS ENUM (
     'queued',
@@ -21,29 +33,31 @@ CREATE TYPE execution_status AS ENUM (
     'waiting'
 );
 
-CREATE TABLE "execution"(
-    "id" BIGINT NOT NULL,
-    "previous_execution_id" BIGINT NULL,
-    "workflow_id" TEXT NOT NULL,
-    "status" execution_status NOT NULL DEFAULT 'queued',
-    "node_key" TEXT NOT NULL,
-    "created_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    "updated_at" TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL DEFAULT now()
+CREATE TABLE execution (
+    id BIGSERIAL PRIMARY KEY,
+    workflow_id BIGINT NOT NULL REFERENCES workflow(id) ON DELETE CASCADE,
+    status execution_status NOT NULL DEFAULT 'queued',
+    scheduled_for TIMESTAMPTZ NOT NULL DEFAULT now(),
+    started_at TIMESTAMPTZ DEFAULT now(),
+    finished_at TIMESTAMPTZ,
+    input JSONB
 );
-ALTER TABLE
-    "execution" ADD PRIMARY KEY("id");
-CREATE INDEX "execution_status_index" ON
-    "execution"("status");
-CREATE TABLE "execution_data"(
-    "execution_id" BIGINT NOT NULL,
-    "input" jsonb NULL,
-    "output" jsonb NULL
+
+CREATE TABLE execution_log (
+    id BIGSERIAL PRIMARY KEY,
+    execution_id BIGINT NOT NULL REFERENCES execution(id) ON DELETE CASCADE,
+    node_id BIGINT NOT NULL REFERENCES node(id) ON DELETE CASCADE,
+    started_at TIMESTAMPTZ DEFAULT now(),
+    finished_at TIMESTAMPTZ,
+    output JSONB,
+    error TEXT
 );
-ALTER TABLE
-    "execution_data" ADD PRIMARY KEY("execution_id");
-ALTER TABLE
-    "execution" ADD CONSTRAINT "execution_workflow_id_foreign" FOREIGN KEY("workflow_id") REFERENCES "workflow"("id");
-ALTER TABLE
-    "execution" ADD CONSTRAINT "execution_id_foreign" FOREIGN KEY("id") REFERENCES "execution_data"("execution_id");
-ALTER TABLE
-    "execution" ADD CONSTRAINT "execution_previous_execution_id_foreign" FOREIGN KEY("previous_execution_id") REFERENCES "execution"("id");
+
+-- Índices para performance
+CREATE UNIQUE INDEX idx_workflow_pub_id ON workflow(pub_id);
+CREATE INDEX idx_node_workflow ON node(workflow_id);
+CREATE INDEX idx_edge_from_node ON edge(from_node_id);
+CREATE INDEX idx_edge_to_node ON edge(to_node_id);
+CREATE INDEX idx_execution_workflow ON execution(workflow_id);
+CREATE INDEX idx_execution_status ON execution(status);
+CREATE INDEX idx_execution_log_exec ON execution_log(execution_id);
