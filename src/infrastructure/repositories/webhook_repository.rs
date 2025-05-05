@@ -1,28 +1,28 @@
 
 use sqlx::{PgPool, Error, Transaction, Postgres};
 use crate::domain::entities::HttpRequest;
+use super::{Webhook, WebhookMethod};
 use serde_json::json;
-use super::Webhook;
 
 pub struct WebhookRepository;
 
 impl WebhookRepository {
-    pub async fn get_by_path(pool: &PgPool, path: &str, method: &String) -> Result<Option<Webhook>, Error> {
-        sqlx::query_as!(
-            Webhook,
+    pub async fn get_by_path(pool: &PgPool, path: &str, method: &WebhookMethod) -> Result<Option<Webhook>, Error> {
+        sqlx::query_as(
             r#"
             select
                 response_code,
                 workflow_id
             from
                 webhook
-            where
+                where
                 path = $1
                 and method = $2
             "#,
-            path,
-            method,
-        ).fetch_optional(
+        )
+        .bind(path)
+        .bind(method)
+        .fetch_optional(
             pool,
         ).await
     }

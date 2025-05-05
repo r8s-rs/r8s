@@ -84,7 +84,7 @@ impl WorkflowRepository {
                 wf_id,
                 node.name,
                 node_type,
-                json!({}),
+                json!(node.conditions),
             ).fetch_one(
                 &mut **tx,
             ).await;

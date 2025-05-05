@@ -1,6 +1,5 @@
 use crate::infrastructure::repositories::Workflow;
-use std::collections::{VecDeque, BTreeMap};
-use crate::domain::entities::HttpRequest;
+use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use sqlx::{Postgres, Pool};
 use super::Partitions;

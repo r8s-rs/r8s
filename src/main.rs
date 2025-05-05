@@ -5,9 +5,9 @@ use std::collections::VecDeque;
 use std::fs::create_dir_all;
 use std::sync::{Arc, Mutex};
 use application::State;
+use log::{info, error};
 use std::env::var;
 use actix::Actor;
-use log::info;
 
 mod infrastructure;
 mod application;
@@ -53,6 +53,11 @@ async fn main() -> std::io::Result<()> {
         )
         .await
         .expect("Failed to connect to database");
+
+    match sqlx::migrate!().run(&pool).await {
+        Ok(()) => info!("As migrações foram aplicadas!"),
+        Err(e) => error!("Falha ao aplicar migrações {e}")
+    }
 
     let data = web::Data::new(State {
         db: pool.clone(),
