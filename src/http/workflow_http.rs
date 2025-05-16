@@ -1,6 +1,6 @@
 use crate::infrastructure::repositories::{WorkflowRepository, Workflow as WorkflowEntity};
+use tracing::info;
 use crate::State;
-use log::info;
 use actix_web::{
     HttpResponse,
     Responder,

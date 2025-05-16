@@ -2,8 +2,8 @@ use crate::infrastructure::repositories::{WebhookRepository, WorkflowRepository}
 use std::{collections::BTreeMap, time::Duration};
 use crate::domain::entities::HttpRequest;
 use actix::{Actor, Context, spawn};
+use tracing::{error, info, warn};
 use crate::application::State;
-use log::{error, info, warn};
 use actix_web::web::Data;
 use actix::AsyncContext;
 
