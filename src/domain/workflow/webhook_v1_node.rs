@@ -1,11 +1,14 @@
 use crate::application::State;
 use serde::{Deserialize, Serialize};
 mod request;
-use crate::domain::entities::NodeBase;
+use crate::domain::entities::{NodeBase, HttpMethod};
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct WebhookV1Node {
-    //pub request: Request,
+    pub path: String,
+    pub method: HttpMethod,
+    pub response_code: i64,
     pub next: Option<Vec<String>>,
 }
 
