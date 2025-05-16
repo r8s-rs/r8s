@@ -4,8 +4,8 @@ use sqlx::postgres::PgPoolOptions;
 use std::collections::VecDeque;
 use std::fs::create_dir_all;
 use std::sync::{Arc, Mutex};
+use tracing::{info, error};
 use application::State;
-use log::{info, error};
 use std::env::var;
 use actix::Actor;
 
@@ -18,30 +18,31 @@ mod executador;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init();
+    tracing_subscriber::fmt()
+        .init();
 
-    let base_path = infrastructure::repositories::FileRepository::get_base_path();
+    let base_path: &'static str = infrastructure::repositories::FileRepository::get_base_path();
 
-    let fjall_path = infrastructure::repositories::FileRepository::get_fjall_path();
+    let fjall_path: &'static str = infrastructure::repositories::FileRepository::get_fjall_path();
 
     info!("As configurações/filas do r8s estão sendo salvas em [{base_path}]");
 
     let _ = create_dir_all(base_path);
 
-    let keyspace = Config::new(fjall_path).open().expect("Não foi possível criar o keyspace fjall");
+    let keyspace: fjall::Keyspace = Config::new(fjall_path).open().expect("Não foi possível criar o keyspace fjall");
 
-    let keyspace = Arc::new(keyspace);
+    let keyspace: Arc<fjall::Keyspace> = Arc::new(keyspace);
 
-    let partitions = application::Partitions {
+    let partitions: application::Partitions = application::Partitions {
         webhook_v1_pendings: keyspace.open_partition(
             domain::entities::partitions::WEBHOOK_V1_PENDINGS,
             PartitionCreateOptions::default(),
         ).expect("Não foi possível abrir a partição")
     };
 
-    let partitions = Arc::new(partitions);
+    let partitions: Arc<application::Partitions> = Arc::new(partitions);
 
-    let pool = PgPoolOptions::new()
+    let pool: sqlx::Pool<sqlx::Postgres> = PgPoolOptions::new()
         .max_connections(
             var("R8S_POSTGRES_CONNECTIONS").unwrap_or(
                 "5".to_string()
@@ -59,7 +60,7 @@ async fn main() -> std::io::Result<()> {
         Err(e) => error!("Falha ao aplicar migrações {e}")
     }
 
-    let data = web::Data::new(State {
+    let data: web::Data<State> = web::Data::new(State {
         db: pool.clone(),
         keyspace: keyspace.clone(),
         partitions: partitions,
