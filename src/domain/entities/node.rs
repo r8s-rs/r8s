@@ -2,7 +2,7 @@ use super::{NodeKind, NodeBase, EdgeCondition};
 use crate::domain::workflow::UnknownNode;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Node {
     pub name: String,
     #[serde(flatten)]

@@ -13,4 +13,8 @@ impl NodeBase for SetV1Node {
     fn get_type(&self) -> &'static str {
         "SetV1"
     }
+
+    fn is_trigger(&self) -> bool {
+        false
+    }
 }

@@ -6,7 +6,7 @@ use crate::domain::workflow::{
     IfV1Node,
 };
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "type")]
 pub enum NodeKind {
     #[serde(rename = "ManualTriggerV1")]

@@ -1,9 +1,9 @@
-use crate::infrastructure::repositories::{WebhookRepository, WebhookMethod};
-use crate::domain::entities::HttpRequest as HttpRequestEntity;
+use crate::domain::entities::{HttpRequest as HttpRequestEntity, HttpMethod};
+use crate::infrastructure::repositories::WebhookRepository;
 use std::{collections::HashMap, net::IpAddr};
 use serde_json::{Value, json};
 use futures_util::StreamExt;
-use log::{info, error};
+use tracing::{info, error};
 use std::str::FromStr;
 use nanoid::nanoid;
 use crate::State;
@@ -40,7 +40,7 @@ pub async fn webhook_http(
         .to_string()
         .to_lowercase();
 
-    let method = WebhookMethod::from_str(method.as_str());
+    let method = HttpMethod::from_str(method.as_str());
 
     if method.is_err() {
         return Ok(HttpResponse::BadGateway().body("method not found"));

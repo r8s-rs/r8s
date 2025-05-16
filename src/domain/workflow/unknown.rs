@@ -9,4 +9,8 @@ impl NodeBase for UnknownNode {
     fn get_type(&self) -> &'static str {
         "Unknown"
     }
+
+    fn is_trigger(&self) -> bool {
+        false
+    }
 }

@@ -6,6 +6,10 @@ pub struct ManualTriggerV1Node;
 
 impl NodeBase for ManualTriggerV1Node {
     fn get_type(&self) -> &'static str {
-        "SetV1"
+        "ManualTriggerV1"
+    }
+
+    fn is_trigger(&self) -> bool {
+        true
     }
 }

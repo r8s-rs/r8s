@@ -1,10 +1,12 @@
+use crate::domain::workflow::WebhookV1Node;
 use sqlx::{Transaction, Error, Postgres};
+use crate::domain::entities::NodeKind;
 use std::collections::BTreeMap;
+use tracing::{debug, trace};
 use serde_json::json;
 use super::Workflow;
 
 type MapNodes<'a> = BTreeMap<&'a str, i64>;
-type MapEdges = BTreeMap<i64, i64>;
 
 pub struct WorkflowRepository;
 
@@ -53,16 +55,67 @@ impl WorkflowRepository {
 
         let mut map_nodes: MapNodes = BTreeMap::new();
 
-        let mut map_edges: MapEdges = BTreeMap::new();
+        Self::prepare_triggers(tx, wf_inserted, wf).await;
 
-        Self::insert_nodes(tx, wf_inserted, wf, &mut map_nodes, &mut map_edges).await;
+        Self::insert_nodes(tx, wf_inserted, wf, &mut map_nodes).await;
 
-        Self::insert_edges(tx, wf, &mut map_nodes, &mut map_edges).await;
+        Self::insert_edges(tx, wf, &mut map_nodes).await;
 
         Ok(())
     }
 
-    async fn insert_nodes<'a>(tx: &mut Transaction<'_, Postgres>, wf_id: i64, wf: &'a Workflow, map_nodes: &mut MapNodes<'a>, map_edges: &mut MapEdges) {
+    async fn prepare_triggers<'a>(tx: &mut Transaction<'_, Postgres>, wf_id: i64, wf: &'a Workflow) {
+        for (_, node) in &wf.nodes {
+            if !node.get_kind().is_trigger() {
+                continue;
+            }
+
+            match node.kind {
+                NodeKind::WebhookV1(ref kind) => Self::insert_webhook_v1(tx, kind, wf_id).await,
+                _ => ()
+            }
+
+            break;
+        }
+    }
+
+    async fn insert_webhook_v1<'a>(tx: &mut Transaction<'_, Postgres>, node: &WebhookV1Node, wf_id: i64) {
+        let _ = sqlx::query(
+                r#"
+                INSERT INTO webhook (
+                    path,
+                    method,
+                    workflow_id,
+                    response_code
+                ) VALUES (
+                    $1,
+                    $2,
+                    $3,
+                    $4
+                ) ON CONFLICT (path)
+                DO UPDATE SET
+                    method = EXCLUDED.method,
+                    workflow_id = EXCLUDED.workflow_id,
+                    response_code = EXCLUDED.response_code
+                RETURNING path
+                "#,
+            )
+            .bind(&node.path)
+            .bind(&node.method)
+            .bind(wf_id)
+            .bind(node.response_code)
+            .fetch_one(&mut **tx)
+            .await;
+
+        trace!(
+            path = &node.path,
+            method = &node.method.to_string(),
+            wf_id = wf_id,
+            response_code = node.response_code,
+        );
+    }
+
+    async fn insert_nodes<'a>(tx: &mut Transaction<'_, Postgres>, wf_id: i64, wf: &'a Workflow, map_nodes: &mut MapNodes<'a>) {
         for (node_key, node) in &wf.nodes {
             let node_kind = node.get_kind();
 
@@ -98,20 +151,20 @@ impl WorkflowRepository {
         }
     }
 
-    async fn insert_edges(tx: &mut Transaction<'_, Postgres>, wf: &Workflow, map_nodes: &mut BTreeMap<&str, i64>, map_edges: &mut BTreeMap<i64, i64>) {
+    async fn insert_edges(tx: &mut Transaction<'_, Postgres>, wf: &Workflow, map_nodes: &mut BTreeMap<&str, i64>) {
         for (node_key, node) in &wf.nodes {
             let from_node_id = map_nodes[node_key.as_str()];
 
             if let Some(edges) = &node.next {
                 for edge in edges {
-                    dbg!(&edge);
                     let to_node_id = map_nodes.get(edge.as_str());
 
                     if to_node_id.is_none() {
+                        debug!("to_node_id is none: {}", edge);
                         continue;
                     }
 
-                    let node_inserted = sqlx::query!(
+                    let _ = sqlx::query!(
                         r#"
                         insert into edge (
                             from_node_id,
