@@ -13,6 +13,10 @@ impl NodeBase for WebhookV1Node {
     fn get_type(&self) -> &'static str {
         "WebhookV1"
     }
+
+    fn is_trigger(&self) -> bool {
+        true
+    }
 }
 
 impl WebhookV1Node {

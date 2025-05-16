@@ -14,4 +14,8 @@ impl NodeBase for IfV1Node {
     fn get_type(&self) -> &'static str {
         "IfV1"
     }
+
+    fn is_trigger(&self) -> bool {
+        false
+    }
 }
