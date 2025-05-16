@@ -1,7 +1,10 @@
 use crate::application::State;
 use serde::{Deserialize, Serialize};
 mod request;
-use crate::domain::entities::{NodeBase, HttpMethod};
+use crate::domain::entities::{
+    NodeBase,
+    HttpMethod,
+};
 
 
 #[derive(Debug, Deserialize, Serialize)]
