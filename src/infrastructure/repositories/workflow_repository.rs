@@ -2,11 +2,11 @@ use crate::domain::workflow::WebhookV1Node;
 use sqlx::{Transaction, Error, Postgres};
 use crate::domain::entities::NodeKind;
 use std::collections::BTreeMap;
-use tracing::{debug, trace};
+use tracing::{debug, info, trace};
 use serde_json::json;
 use super::Workflow;
 
-type MapNodes<'a> = BTreeMap<&'a str, i64>;
+type MapNodes<'a> = BTreeMap<u16, i64>;
 
 pub struct WorkflowRepository;
 
@@ -117,6 +117,8 @@ impl WorkflowRepository {
 
     async fn insert_nodes<'a>(tx: &mut Transaction<'_, Postgres>, wf_id: i64, wf: &'a Workflow, map_nodes: &mut MapNodes<'a>) {
         for (node_key, node) in &wf.nodes {
+            info!(node_key = &node_key);
+
             let node_kind = node.get_kind();
 
             let node_type = node_kind.get_type();
@@ -145,19 +147,19 @@ impl WorkflowRepository {
             let node_inserted_id = node_inserted.unwrap().id;
 
             map_nodes.insert(
-                node_key,
+                *node_key,
                 node_inserted_id,
             );
         }
     }
 
-    async fn insert_edges(tx: &mut Transaction<'_, Postgres>, wf: &Workflow, map_nodes: &mut BTreeMap<&str, i64>) {
+    async fn insert_edges(tx: &mut Transaction<'_, Postgres>, wf: &Workflow, map_nodes: &mut MapNodes<'_>) {
         for (node_key, node) in &wf.nodes {
-            let from_node_id = map_nodes[node_key.as_str()];
+            let from_node_id = map_nodes[node_key];
 
             if let Some(edges) = &node.next {
                 for edge in edges {
-                    let to_node_id = map_nodes.get(edge.as_str());
+                    let to_node_id = map_nodes.get(edge);
 
                     if to_node_id.is_none() {
                         debug!("to_node_id is none: {}", edge);

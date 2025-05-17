@@ -10,7 +10,7 @@ pub struct Node {
     #[serde(default)]
     pub conditions: Option<EdgeCondition>,
     #[serde(default)]
-    pub next: Option<Vec<String>>,
+    pub next: Option<Vec<u16>>,
 }
 
 impl Node {
