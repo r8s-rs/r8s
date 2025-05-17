@@ -4,12 +4,12 @@ use crate::infrastructure::repositories::Workflow;
 
 #[derive(Default)]
 pub struct ExecutionContext {
-    pub memory: HashMap<String, serde_json::Value>,
+    pub memory: HashMap<u16, serde_json::Value>,
 }
 
 pub fn run_workflow(workflow: &Workflow) {
     let mut queue = VecDeque::new();
-    queue.push_back("1".to_string());
+    queue.push_back(1);
     let mut context = ExecutionContext::default();
 
     while let Some(current_id) = queue.pop_front() {
@@ -22,7 +22,7 @@ pub fn run_workflow(workflow: &Workflow) {
     println!("✅ Fluxo finalizado. Contexto: {:?}", context.memory);
 }
 
-fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<String>) {
+fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<u16>) {
     println!("🔹 Executando '{}'", node.name);
 
 
@@ -32,7 +32,7 @@ fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<St
             println!("   ➥ Manual Trigger");
 
             for next_node in node.next.as_ref().unwrap().iter() {
-                queue.push_back(next_node.clone());
+                queue.push_back(*next_node);
             }
         }
         NodeKind::WebhookV1(webhook_node) => {
@@ -42,7 +42,7 @@ fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<St
             println!("   ➥ Set vars: {:?}", set_node.data);
 
             for next_node in node.next.as_ref().unwrap().iter() {
-                queue.push_back(next_node.clone());
+                queue.push_back(*next_node);
             }
         }
         NodeKind::IfV1(node) => {
