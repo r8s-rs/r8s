@@ -17,6 +17,7 @@ impl Node {
     pub fn get_kind(&self) -> Box<&dyn NodeBase> {
         match &self.kind {
             NodeKind::ManualTriggerV1(node) => Box::new(node),
+            NodeKind::DoNothingV1(node) => Box::new(node),
             NodeKind::SetV1(node) => Box::new(node),
             NodeKind::IfV1(node) => Box::new(node),
             NodeKind::WebhookV1(node) => Box::new(node),
