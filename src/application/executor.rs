@@ -35,6 +35,9 @@ fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<u1
                 queue.push_back(*next_node);
             }
         }
+        NodeKind::DoNothingV1(node) => {
+            //
+        }
         NodeKind::WebhookV1(webhook_node) => {
             //
         }

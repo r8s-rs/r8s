@@ -5,17 +5,17 @@ use std::str::FromStr;
 #[sqlx(type_name = "webhook_method")]
 #[sqlx(rename_all = "lowercase")]
 pub enum HttpMethod {
-    #[serde(alias = "GET")]
+    #[serde(rename = "get")]
     Get,
-    #[serde(alias = "POST")]
+    #[serde(rename = "post")]
     Post,
-    #[serde(alias = "DELETE")]
+    #[serde(rename = "delete")]
     Delete,
-    #[serde(alias = "PUT")]
+    #[serde(rename = "put")]
     Put,
-    #[serde(alias = "PATCH")]
+    #[serde(rename = "patch")]
     Patch,
-    #[serde(alias = "HEAD")]
+    #[serde(rename = "head")]
     Head,
 }
 
