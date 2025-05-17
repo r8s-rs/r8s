@@ -2,7 +2,7 @@ use crate::domain::workflow::WebhookV1Node;
 use sqlx::{Transaction, Error, Postgres};
 use crate::domain::entities::NodeKind;
 use std::collections::BTreeMap;
-use tracing::{debug, info, trace};
+use tracing::{info, trace};
 use serde_json::json;
 use super::Workflow;
 
@@ -117,7 +117,7 @@ impl WorkflowRepository {
 
     async fn insert_nodes<'a>(tx: &mut Transaction<'_, Postgres>, wf_id: i64, wf: &'a Workflow, map_nodes: &mut MapNodes<'a>) {
         for (node_key, node) in &wf.nodes {
-            info!(node_key = &node_key);
+            trace!(node_key, node.name);
 
             let node_kind = node.get_kind();
 
@@ -157,12 +157,17 @@ impl WorkflowRepository {
         for (node_key, node) in &wf.nodes {
             let from_node_id = map_nodes[node_key];
 
+            info!(
+                node_key = node_key,
+                from_node_id = from_node_id
+            );
+
             if let Some(edges) = &node.next {
                 for edge in edges {
                     let to_node_id = map_nodes.get(edge);
 
                     if to_node_id.is_none() {
-                        debug!("to_node_id is none: {}", edge);
+                        trace!(reason = "to_node_id not_found", node = edge);
                         continue;
                     }
 
