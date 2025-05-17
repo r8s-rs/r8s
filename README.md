@@ -66,10 +66,10 @@ The following detailed roadmap outlines the development phases of r8s, prioritiz
 
 | Phase                                    | Completed Tasks                                                                                                                                                                                                          |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Phase 1 – Core Fundamentals**          | - [x] Define project structure (workspace, crates) <br> - [x] Create the basic execution engine <br> - [x] Implement primary node types (input, output, basic transformations) <br> - [x] Establish state storage system |
-| **Phase 2 – Backend and API**            | - [x] Implement REST API to manage workflows <br> - [x] Set up user authentication and control <br> - [x] Add asynchronous execution queue <br> - [x] Implement database persistence                                     |
-| **Phase 3 – Interface and Interaction**  | - [x] Develop a basic web panel <br> - [x] Implement WebSockets for real-time communication <br> - [x] Create CLI for management                                                                                         |
-| **Phase 4 – Integrations and Expansion** | - [x] Enable support for external plugins and integrations <br> - [x] Enhance scalability with Docker/Kubernetes <br> - [x] Documentation and initial beta tests                                                         |
+| **Phase 1 – Core Fundamentals**          | - [x] Define project structure (workspace, crates) <br> - [x] Create the basic execution engine <br> - [ ] Implement primary node types (input, output, basic transformations) <br> - [x] Establish state storage system |
+| **Phase 2 – Backend and API**            | - [x] Implement REST API to manage workflows <br> - [ ] Set up user authentication and control <br> - [ ] Add asynchronous execution queue <br> - [x] Implement database persistence                                     |
+| **Phase 3 – Interface and Interaction**  | - [ ] Develop a basic web panel <br> - [ ] Implement WebSockets for real-time communication <br> - [ ] Create CLI for management                                                                                         |
+| **Phase 4 – Integrations and Expansion** | - [ ] Enable support for external plugins and integrations <br> - [ ] Enhance scalability with Docker/Kubernetes <br> - [ ] Documentation and initial beta tests                                                         |
 
 ## How to Contribute
 
