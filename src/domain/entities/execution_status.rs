@@ -4,7 +4,7 @@ use std::str::FromStr;
 #[derive(Debug, sqlx::Type, PartialEq, Eq, Deserialize, Serialize)]
 #[sqlx(type_name = "execution_status")]
 #[sqlx(rename_all = "lowercase")]
-pub enum HttpMethod {
+pub enum ExecutionStatus {
     #[serde(rename = "queued")]
     Queued,
     #[serde(rename = "running")]
@@ -19,7 +19,7 @@ pub enum HttpMethod {
     Waiting
 }
 
-impl ToString for HttpMethod {
+impl ToString for ExecutionStatus {
     fn to_string(&self) -> String {
         match &self {
             Self::Queued => "queued",
@@ -32,7 +32,7 @@ impl ToString for HttpMethod {
     }
 }
 
-impl FromStr for HttpMethod {
+impl FromStr for ExecutionStatus {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
