@@ -1,4 +1,5 @@
 mod workflow_prepare_execution;
+mod execution_log_repository;
 mod execution_repository;
 mod workflow_repository;
 mod webhook_repository;
@@ -9,6 +10,7 @@ mod webhook;
 mod count;
 
 //pub use workflow_prepare_execution::WorkflowPrepareExecution;
+pub use execution_log_repository::ExecutionLogRepository;
 pub use execution_repository::ExecutionRepository;
 pub use workflow_repository::WorkflowRepository;
 pub use webhook_repository::WebhookRepository;

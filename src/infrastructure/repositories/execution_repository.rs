@@ -1,4 +1,4 @@
-use crate::domain::entities::{Execution, ExecutionStatus, Node, Edge};
+use crate::domain::entities::{Execution, ExecutionStatus, Edge};
 use sqlx::{Transaction, Error, Postgres};
 
 pub struct ExecutionRepository;
@@ -44,7 +44,7 @@ impl ExecutionRepository {
         sqlx::query(
             "update execution set status = $1, started_at = now() where id = $2"
         ).bind(
-            ExecutionStatus::Running,
+            ExecutionStatus::Running
         ).bind(
             id
         ).execute(&mut **tx).await?;
@@ -64,27 +64,7 @@ impl ExecutionRepository {
         Ok(())
     }
 
-    /*
-    pub async fn get_nodes_by_workflow_id(tx: &mut Transaction<'_, Postgres>, workflow_id: i64) -> Result<Vec<NodeExecution>, Error> {
-        sqlx::query_as!(
-            NodeExecution,
-            r#"
-            select
-                id,
-                type,
-                data
-            from
-                node
-            where
-                workflow_id = $1
-            "#,
-            workflow_id,
-        )
-        .fetch_all(&mut **tx)
-        .await
-    }*/
-
-    pub async fn get_edges_by_workflow_id(tx: &mut Transaction<'_, Postgres>, workflow_id: i64) -> Result<Vec<Edge>, Error> {
+    pub async fn get_edges_by_workflow_id(tx: &mut Transaction<'_, Postgres>, workflow_id: i64, execution_id: i64) -> Result<Vec<Edge>, Error> {
         sqlx::query_as!(
             Edge,
             r#"
@@ -94,23 +74,31 @@ impl ExecutionRepository {
                     n.data as from_data,
                     n.type as from_type,
                     e.condition,
-                    n.workflow_id
+                    n.workflow_id,
+                    el.output from_output,
+                    el.id execution_log_id
                 from
                     node n
                 join edge e on
                     n.id = e.from_node_id
                 join node n2 on
                     e.to_node_id = n2.id
+                left join execution_log el on
+                    n.id = el.node_id
+                    and el.execution_id = $1
                 where
-                    n.workflow_id = $1
+                    n.workflow_id = $2
                 group by
                     n.id,
                     n.data,
                     n.type,
                     e.condition,
-                    n.workflow_id
+                    n.workflow_id,
+                    el.output,
+                    el.id
             "#,
-            workflow_id
+            execution_id,
+            workflow_id,
         )
         .fetch_all(&mut **tx)
         .await
