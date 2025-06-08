@@ -20,6 +20,8 @@ pub struct Edge {
     pub from_data: Option<Value>,
     pub condition: Value,
     pub from_type: String,
+    pub from_output: Option<Value>,
+    pub execution_log_id: Option<i64>,
 }
 
 impl Edge {

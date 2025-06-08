@@ -1,5 +1,5 @@
 use crate::infrastructure::repositories::{ExecutionRepository, Workflow};
-use crate::domain::entities::{ExecutionStatus, Node};
+use crate::domain::entities::{ExecutionStatus, Node, Edge};
 use actix::{Actor, Context, AsyncContext, spawn};
 use tracing::{info, error, trace};
 use crate::application::Executor;
@@ -22,6 +22,8 @@ impl Actor for WorkflowToQueue {
 
         ctx.run_interval(Duration::from_secs(10), move |_actor, ctx| {
             let db = db.clone();
+
+            // aqui verificar uso de memoria ram e cpu antes de pegar novas tarefas, o usuário deverá específicar a lógica usando variaveis de ambiente
 
             spawn(async move {
                 match db.begin().await {
@@ -46,16 +48,18 @@ impl Actor for WorkflowToQueue {
                                 execution.id
                             ).await.unwrap();
 
-                            let edges = ExecutionRepository::get_edges_by_workflow_id(
-                                &mut tx,
-                                execution.workflow_id,
-                            ).await.unwrap();
+                            let edges: BTreeMap<i64, Edge> = ExecutionRepository::get_edges_by_workflow_id(&mut tx, execution.workflow_id, execution.id)
+                                .await
+                                .expect("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+                                .into_iter()
+                                .map(|edge| (edge.from_id, edge))
+                                .collect();
 
                             let mut last_node = None::<Node>;
 
                             let mut nodes = BTreeMap::new();
 
-                            for edge in edges {
+                            for edge in edges.values() {
                                 let node = edge.get_from_node(&mut tx, last_node.as_ref()).await;
 
                                 trace!("[WorkflowToQueue] Node: {:#?}, Edge: {:#?}", &edge, &node);
@@ -76,9 +80,9 @@ impl Actor for WorkflowToQueue {
                                 nodes,
                             };
 
-                            let mut executor = Executor::new(wf, execution.input);
+                            let mut executor = Executor::new(wf, execution.input, execution.id);
 
-                            match executor.run(&mut tx).await {
+                            match executor.run(&mut tx, &edges).await {
                                 Ok(ExecutionStatus::Success) => {
                                     info!("[WorkflowToQueue] Execução finalizada com sucesso: {}", execution.id);
 
@@ -117,7 +121,7 @@ impl Actor for WorkflowToQueue {
                 }
             });
 
-            info!("[WorkflowToQueue] Executando tarefa a cada 30 segundos...");
+            //info!("[WorkflowToQueue] Executando tarefa a cada 30 segundos...");
             // Sua lógica de tarefa recorrente aqui
         });
     }
