@@ -1,9 +1,9 @@
-use crate::domain::entities::{NodeBase, NodeKind};
+use crate::domain::entities::{NodeBase, Node};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DoNothingV1Node {
-    pub node_kind: Box<NodeKind>,
+    pub node: Box<Option<Node>>,
 }
 
 impl NodeBase for DoNothingV1Node {

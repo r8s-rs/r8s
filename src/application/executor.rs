@@ -1,56 +1,67 @@
-use std::collections::{HashMap, VecDeque};
-use crate::domain::entities::*;
 use crate::infrastructure::repositories::Workflow;
+use sqlx::{Transaction, Postgres};
+use std::collections::BTreeMap;
+use serde_json::Value;
+use tracing::info;
+use crate::domain::entities::{
+    ExecutionStatus,
+    NodeKind,
+    Edge,
+};
 
-#[derive(Default)]
-pub struct ExecutionContext {
-    pub memory: HashMap<u16, serde_json::Value>,
+pub struct Executor {
+    pub workflow: Workflow,
+    pub initial_input: Value,
+    pub execution_id: i64,
+    memory: BTreeMap<u64, Value>,
 }
 
-pub fn run_workflow(workflow: &Workflow) {
-    let mut queue = VecDeque::new();
-    queue.push_back(1);
-    let mut context = ExecutionContext::default();
-
-    while let Some(current_id) = queue.pop_front() {
-
-        if let Some(node) = workflow.nodes.get(&current_id) {
-            execute_node(node, &mut context, &mut queue);
+impl Executor {
+    pub fn new(workflow: Workflow, initial_input: Value, execution_id: i64) -> Self {
+        Self {
+            workflow,
+            initial_input,
+            execution_id,
+            memory: BTreeMap::new(),
         }
     }
 
-    println!("✅ Fluxo finalizado. Contexto: {:?}", context.memory);
-}
+    pub async fn run(&mut self, tx: &mut Transaction<'_, Postgres>, edges: &BTreeMap<i64, Edge>) -> Result<ExecutionStatus, String> {
+        for (node_key, node) in &self.workflow.nodes {
+            let edge = edges.get(&(*node_key as i64)).unwrap();
 
-fn execute_node(node: &Node, ctx: &mut ExecutionContext, queue: &mut VecDeque<u16>) {
-    println!("🔹 Executando '{}'", node.name);
+            match &node.kind {
+                NodeKind::ManualTriggerV1(_) => {
+                    println!("   ➥ Manual Trigger");
+                }
+                NodeKind::DoNothingV1(node) => {
+                    println!("   ➥ Do nothing");
+                }
+                NodeKind::WebhookV1(webhook_node) => {
+                    info!("WebhookV1: [{}]", self.execution_id);
 
+                    if edge.execution_log_id.is_none() {
+                        let _ = webhook_node.save_execution_log(
+                            tx,
+                            self.execution_id,
+                            *node_key as i64,
+                            Some(self.initial_input.clone()),
+                            None
+                        ).await;
+                    }
 
-
-    match &node.kind {
-        NodeKind::ManualTriggerV1(_) => {
-            println!("   ➥ Manual Trigger");
-
-            for next_node in node.next.as_ref().unwrap().iter() {
-                queue.push_back(*next_node);
+                    self.memory.insert(*node_key as u64, self.initial_input.clone());
+                }
+                NodeKind::SetV1(set_node) => {
+                    println!("   ➥ Set vars: {:?}", set_node.data);
+                }
+                NodeKind::IfV1(node) => {
+                    println!("   ➥ If");
+                }
+                NodeKind::Unknown => println!("⚠️  Tipo desconhecido"),
             }
         }
-        NodeKind::DoNothingV1(node) => {
-            //
-        }
-        NodeKind::WebhookV1(webhook_node) => {
-            //
-        }
-        NodeKind::SetV1(set_node) => {
-            println!("   ➥ Set vars: {:?}", set_node.data);
 
-            for next_node in node.next.as_ref().unwrap().iter() {
-                queue.push_back(*next_node);
-            }
-        }
-        NodeKind::IfV1(node) => {
-            //
-        }
-        NodeKind::Unknown => println!("⚠️  Tipo desconhecido"),
+        Ok(ExecutionStatus::Success)
     }
 }

@@ -9,30 +9,30 @@ pub struct Workflow {
     pub pub_id: String,
     pub name: Option<String>,
     pub description: Option<String>,
-    #[serde(deserialize_with = "deserialize_u16_keyed_map")]
-    pub nodes: BTreeMap<u16, Node>,
+    #[serde(deserialize_with = "deserialize_u64_keyed_map")]
+    pub nodes: BTreeMap<u64, Node>,
 }
 
 use serde::de::{Deserializer, MapAccess, Visitor};
 use std::fmt;
 
-fn deserialize_u16_keyed_map<'de, D, V>(deserializer: D) -> Result<BTreeMap<u16, V>, D::Error>
+fn deserialize_u64_keyed_map<'de, D, V>(deserializer: D) -> Result<BTreeMap<u64, V>, D::Error>
 where
     D: Deserializer<'de>,
     V: Deserialize<'de>,
 {
     struct StringKeyMapVisitor<V> {
-        marker: std::marker::PhantomData<fn() -> BTreeMap<u16, V>>,
+        marker: std::marker::PhantomData<fn() -> BTreeMap<u64, V>>,
     }
 
     impl<'de, V> Visitor<'de> for StringKeyMapVisitor<V>
     where
         V: Deserialize<'de>,
     {
-        type Value = BTreeMap<u16, V>;
+        type Value = BTreeMap<u64, V>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("a map with u16 keys represented as strings")
+            formatter.write_str("a map with u64 keys represented as strings")
         }
 
         fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
@@ -41,7 +41,7 @@ where
         {
             let mut map = BTreeMap::new();
             while let Some((key, value)) = access.next_entry::<String, V>()? {
-                let parsed_key = key.parse::<u16>().map_err(serde::de::Error::custom)?;
+                let parsed_key = key.parse::<u64>().map_err(serde::de::Error::custom)?;
                 map.insert(parsed_key, value);
             }
             Ok(map)
