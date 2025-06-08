@@ -5,7 +5,6 @@ use serde_json::Value;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct IfV1Node {
-    pub next: Option<Vec<String>>,
     #[serde(default)]
     pub data: Value,
 }
