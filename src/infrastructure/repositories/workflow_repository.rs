@@ -6,7 +6,7 @@ use tracing::{info, trace};
 use serde_json::json;
 use super::Workflow;
 
-type MapNodes<'a> = BTreeMap<u16, i64>;
+type MapNodes<'a> = BTreeMap<u64, i64>;
 
 pub struct WorkflowRepository;
 
@@ -157,10 +157,7 @@ impl WorkflowRepository {
         for (node_key, node) in &wf.nodes {
             let from_node_id = map_nodes[node_key];
 
-            info!(
-                node_key = node_key,
-                from_node_id = from_node_id
-            );
+            info!(node_key, from_node_id);
 
             if let Some(edges) = &node.next {
                 for edge in edges {
