@@ -2,7 +2,7 @@ use super::{NodeKind, NodeBase, EdgeCondition};
 use crate::domain::workflow::UnknownNode;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Node {
     pub name: String,
     #[serde(flatten)]
@@ -10,7 +10,7 @@ pub struct Node {
     #[serde(default)]
     pub conditions: Option<EdgeCondition>,
     #[serde(default)]
-    pub next: Option<Vec<u16>>,
+    pub next: Option<Vec<u64>>,
 }
 
 impl Node {
