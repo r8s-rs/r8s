@@ -1,79 +1,118 @@
+use crate::domain::entities::{Execution, ExecutionStatus, Node, Edge};
 use sqlx::{Transaction, Error, Postgres};
-use std::collections::BTreeMap;
-//use serde_json::json;
-use super::Workflow;
-
-type MapNodes<'a> = BTreeMap<&'a str, i64>;
-type MapEdges = BTreeMap<i64, i64>;
 
 pub struct ExecutionRepository;
 
 impl ExecutionRepository {
-    pub async fn insert(tx: &mut Transaction<'_, Postgres>) -> Result<(), Error> {
-        /*
-        let exists = sqlx::query_scalar!(
+    pub async fn get_by_status_with_lock(tx: &mut Transaction<'_, Postgres>, status: &ExecutionStatus, limit: i32) -> Result<Vec<Execution>, Error> {
+        let executions: Vec<Execution> = sqlx::query_as(
             r#"
             select
-	            exists(
-                    select 1 from workflow where id = $1
-                ) as exists
+                id,
+                workflow_id,
+                input
+            from
+                execution
+            where
+                status = $1
+                and scheduled_for < now()
+            for update
+                skip locked
+            limit $2
             "#,
-            email,
         )
-        .fetch_one(&mut **tx)
-        .await;
+        .bind(status)
+        .bind(limit)
+        .fetch_all(&mut **tx)
+        .await?;
 
-        dbg!(exists);
-        
-        let wf_inserted = wf_inserted.unwrap().id;
-        
-        let mut map_nodes: MapNodes = BTreeMap::new();
-        
-        let mut map_edges: MapEdges = BTreeMap::new();
-        
-        Self::insert_nodes(tx, wf_inserted, wf, &mut map_nodes, &mut map_edges).await;
-        
-        Self::insert_edges(tx, wf, &mut map_nodes, &mut map_edges).await;
-        */
+        Ok(executions)
+    }
+
+    pub async fn update_status(tx: &mut Transaction<'_, Postgres>, id: i64, status: &ExecutionStatus) -> Result<(), Error> {
+        sqlx::query(
+            "update execution set status = $1 where id = $2"
+        ).bind(
+            status,
+        ).bind(
+            id
+        ).execute(&mut **tx).await?;
+        Ok(())
+    }
+
+    pub async fn update_status_to_running(tx: &mut Transaction<'_, Postgres>, id: i64) -> Result<(), Error> {
+        sqlx::query(
+            "update execution set status = $1, started_at = now() where id = $2"
+        ).bind(
+            ExecutionStatus::Running,
+        ).bind(
+            id
+        ).execute(&mut **tx).await?;
 
         Ok(())
     }
 
-    async fn insert_nodes<'a>(tx: &mut Transaction<'_, Postgres>, wf_id: i64, wf: &'a Workflow, map_nodes: &mut MapNodes<'a>, map_edges: &mut MapEdges) {
-        /*
-        for (node_key, node) in &wf.nodes {
-            let node_kind = node.get_kind();
-            
-            let node_type = node_kind.get_type();
-            
-            let node_inserted = sqlx::query!(
-                r#"
-                insert into node (
-                    workflow_id,
-                    name,
-                    type,
-                    data
-                ) values (
-                    $1,
-                    $2,
-                    $3,
-                    $4
-                ) returning id"#,
-                wf_id,
-                node.name,
-                node_type,
-                json!({}),
-            ).fetch_one(
-                &mut **tx,
-            ).await;
-        
-        let node_inserted_id = node_inserted.unwrap().id;
+    pub async fn update_status_to_finished(tx: &mut Transaction<'_, Postgres>, id: i64, status: &ExecutionStatus) -> Result<(), Error> {
+        sqlx::query(
+            "update execution set status = $1, finished_at = now() where id = $2"
+        ).bind(
+            status,
+        ).bind(
+            id
+        ).execute(&mut **tx).await?;
 
-        map_nodes.insert(
-                node_key,
-                node_inserted_id,
-            );
-        }
-        */
+        Ok(())
+    }
+
+    /*
+    pub async fn get_nodes_by_workflow_id(tx: &mut Transaction<'_, Postgres>, workflow_id: i64) -> Result<Vec<NodeExecution>, Error> {
+        sqlx::query_as!(
+            NodeExecution,
+            r#"
+            select
+                id,
+                type,
+                data
+            from
+                node
+            where
+                workflow_id = $1
+            "#,
+            workflow_id,
+        )
+        .fetch_all(&mut **tx)
+        .await
+    }*/
+
+    pub async fn get_edges_by_workflow_id(tx: &mut Transaction<'_, Postgres>, workflow_id: i64) -> Result<Vec<Edge>, Error> {
+        sqlx::query_as!(
+            Edge,
+            r#"
+                select
+                    n.id as from_id,
+                    array_agg(e.to_node_id::bigint) as to_ids,
+                    n.data as from_data,
+                    n.type as from_type,
+                    e.condition,
+                    n.workflow_id
+                from
+                    node n
+                join edge e on
+                    n.id = e.from_node_id
+                join node n2 on
+                    e.to_node_id = n2.id
+                where
+                    n.workflow_id = $1
+                group by
+                    n.id,
+                    n.data,
+                    n.type,
+                    e.condition,
+                    n.workflow_id
+            "#,
+            workflow_id
+        )
+        .fetch_all(&mut **tx)
+        .await
     }
 }
