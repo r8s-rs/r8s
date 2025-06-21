@@ -50,7 +50,7 @@ impl Actor for WorkflowToQueue {
 
                             let edges: BTreeMap<i64, Edge> = ExecutionRepository::get_edges_by_workflow_id(&mut tx, execution.workflow_id, execution.id)
                                 .await
-                                .expect("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+                                .expect("get_edges_by_workflow_id failed")
                                 .into_iter()
                                 .map(|edge| (edge.from_id, edge))
                                 .collect();
@@ -120,9 +120,6 @@ impl Actor for WorkflowToQueue {
                     }
                 }
             });
-
-            //info!("[WorkflowToQueue] Executando tarefa a cada 30 segundos...");
-            // Sua lógica de tarefa recorrente aqui
         });
     }
 }

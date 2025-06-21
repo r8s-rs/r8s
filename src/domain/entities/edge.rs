@@ -12,13 +12,13 @@ use crate::domain::workflow::{
     IfV1Node,
 };
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, sqlx::FromRow)]
 pub struct Edge {
     pub workflow_id: i64,
     pub from_id: i64,
     pub to_ids: Option<Vec<i64>>,
     pub from_data: Option<Value>,
-    pub condition: Value,
+    pub condition: Option<Value>,
     pub from_type: String,
     pub from_output: Option<Value>,
     pub execution_log_id: Option<i64>,
@@ -26,7 +26,7 @@ pub struct Edge {
 
 impl Edge {
     pub async fn get_from_node(&self, tx: &mut sqlx::Transaction<'_, sqlx::Postgres>, last_node: Option<&Node>) -> Node {
-        let data = self.from_data.clone().unwrap();
+        let data = self.from_data.clone().unwrap_or(Value::Null);
 
         let kind = match self.from_type.as_str() {
             "ManualTriggerV1" => NodeKind::ManualTriggerV1(ManualTriggerV1Node {}),
@@ -50,17 +50,17 @@ impl Edge {
             _ => NodeKind::Unknown,
         };
 
-        let conditions = match serde_json::from_value::<EdgeCondition>(self.condition.clone()) {
-            Ok(condition) => Some(condition),
-            Err(e) => {
-                match self.condition {
-                    Value::Null => None,
-                    _ => {
-                        error!("Erro ao converter edge condition {e}",);
+        let conditions = match self.condition {
+            Some(ref condition) => {
+                match serde_json::from_value::<EdgeCondition>(condition.clone()) {
+                    Ok(cond) => Some(cond),
+                    Err(e) => {
+                        error!("Erro ao converter edge condition {e}");
                         None
                     }
                 }
-            }
+            },
+            None => None,
         };
 
         let next = self.to_ids.as_ref().map(|vec| vec.into_iter().map(|x| *x as u64).collect());

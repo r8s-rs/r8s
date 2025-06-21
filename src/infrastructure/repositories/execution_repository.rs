@@ -70,13 +70,13 @@ impl ExecutionRepository {
             r#"
                 select
                     n.id as from_id,
-                    array_agg(e.to_node_id::bigint) as to_ids,
-                    n.data as from_data,
+                    array_agg(e.to_node_id::bigint) as "to_ids?: _",
+                    n.data as "from_data?: _",
                     n.type as from_type,
-                    e.condition,
+                    e.condition as "condition?: _",
                     n.workflow_id,
-                    el.output from_output,
-                    el.id execution_log_id
+                    el.output as "from_output?: _",
+                    el.id as "execution_log_id?: _"
                 from
                     node n
                 join edge e on
