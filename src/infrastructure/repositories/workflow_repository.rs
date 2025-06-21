@@ -1,9 +1,9 @@
-use crate::domain::workflow::WebhookV1Node;
+use crate::domain::{entities::EdgeCondition, workflow::WebhookV1Node};
 use sqlx::{Transaction, Error, Postgres};
 use crate::domain::entities::NodeKind;
 use std::collections::BTreeMap;
+use serde_json::{json, Value};
 use tracing::{info, trace};
-use serde_json::json;
 use super::Workflow;
 
 type MapNodes<'a> = BTreeMap<u64, i64>;
@@ -123,6 +123,8 @@ impl WorkflowRepository {
 
             let node_type = node_kind.get_type();
 
+            let conditions = Self::get_conditions_or_none(&node.conditions);
+
             let node_inserted = sqlx::query!(
                 r#"
                 insert into node (
@@ -139,7 +141,7 @@ impl WorkflowRepository {
                 wf_id,
                 node.name,
                 node_type,
-                json!(node.conditions),
+                conditions,
             ).fetch_one(
                 &mut **tx,
             ).await;
@@ -150,6 +152,17 @@ impl WorkflowRepository {
                 *node_key,
                 node_inserted_id,
             );
+        }
+    }
+
+    fn get_conditions_or_none(conditions: &Option<EdgeCondition>) -> Option<Value> {
+        match conditions {
+            Some(conditions) => match json!(conditions) {
+                Value::Null => None,
+                value => Some(value),
+                _ => None,
+            },
+            None => None
         }
     }
 
@@ -168,6 +181,8 @@ impl WorkflowRepository {
                         continue;
                     }
 
+                    let conditions = Self::get_conditions_or_none(&node.conditions);
+
                     let _ = sqlx::query!(
                         r#"
                         insert into edge (
@@ -181,7 +196,7 @@ impl WorkflowRepository {
                         )"#,
                         from_node_id,
                         to_node_id,
-                        json!(node.conditions),
+                        conditions,
                     ).fetch_one(
                         &mut **tx,
                     ).await;

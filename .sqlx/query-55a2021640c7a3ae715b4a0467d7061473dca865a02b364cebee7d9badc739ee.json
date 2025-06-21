@@ -1,0 +1,65 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                select\n                    n.id as from_id,\n                    array_agg(e.to_node_id::bigint) as \"to_ids?: _\",\n                    n.data as \"from_data?: _\",\n                    n.type as from_type,\n                    e.condition as \"condition?: _\",\n                    n.workflow_id,\n                    el.output as \"from_output?: _\",\n                    el.id as \"execution_log_id?: _\"\n                from\n                    node n\n                join edge e on\n                    n.id = e.from_node_id\n                join node n2 on\n                    e.to_node_id = n2.id\n                left join execution_log el on\n                    n.id = el.node_id\n                    and el.execution_id = $1\n                where\n                    n.workflow_id = $2\n                group by\n                    n.id,\n                    n.data,\n                    n.type,\n                    e.condition,\n                    n.workflow_id,\n                    el.output,\n                    el.id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "from_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "to_ids?: _",
+        "type_info": "Int8Array"
+      },
+      {
+        "ordinal": 2,
+        "name": "from_data?: _",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 3,
+        "name": "from_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "condition?: _",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 5,
+        "name": "workflow_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "from_output?: _",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "execution_log_id?: _",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "55a2021640c7a3ae715b4a0467d7061473dca865a02b364cebee7d9badc739ee"
+}
