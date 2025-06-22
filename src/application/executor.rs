@@ -29,6 +29,7 @@ impl Executor {
                 "context": {
                     "last": {},
                 },
+                "context_errors": {}
             }),
         }
     }
@@ -78,43 +79,20 @@ impl Executor {
                         edges,
                     );
 
-                    let template = set_node.data.to_string();
-
-                    let template = template.as_str();
-
                     let mut error = None::<String>;
 
-                    match Context::from_value(memory["context"].clone()) {
-                        Ok(context) => {                            
-                            match tera.render_str(template, &context) {
-                                Ok(rendered) => {
-                                    let rendered = rendered.as_str();
-
-                                    memory["context"][&node.name] = serde_json::from_str(rendered).unwrap();
-                                }
-                                Err(e) => {
-                                    println!("   ➥ Erro ao renderizar: {}", e);
-                                    error = Some(e.to_string());
-                                    break;
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            println!("   ➥ Erro ao criar contexto: {}", e);
-                            error = Some(e.to_string());
-                            break;
-                        }
-                    }
-
-                    if edge.execution_log_id.is_none() {
-                        let _ = set_node.save_execution_log(
-                            tx,
-                            self.execution_id,
-                            *node_key as i64,
-                            memory["context"].get(&node.name).cloned(),
-                            error
-                        ).await;
-                    }
+                    let _ = set_node.execute(
+                        tx,
+                        self.execution_id,
+                        edge.execution_log_id,
+                        *node_key as i64,
+                        &mut memory,
+                        &mut tera,
+                        &node.name,
+                        &mut error,
+                        &mut self.memory,
+                    ).await;
+                    
                 }
                 NodeKind::IfV1(node) => {
                     println!("   ➥ If");
