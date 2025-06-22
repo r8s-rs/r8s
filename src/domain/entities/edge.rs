@@ -16,8 +16,11 @@ use crate::domain::workflow::{
 pub struct Edge {
     pub workflow_id: i64,
     pub from_id: i64,
-    pub to_ids: Option<Vec<i64>>,
+    pub to_id: Option<i64>,
     pub from_data: Option<Value>,
+    pub from_key: i64,
+    pub from_name: String,
+    pub to_name: String,
     pub condition: Option<Value>,
     pub from_type: String,
     pub from_output: Option<Value>,
@@ -63,13 +66,11 @@ impl Edge {
             None => None,
         };
 
-        let next = self.to_ids.as_ref().map(|vec| vec.into_iter().map(|x| *x as u64).collect());
-
         Node {
-            name: "".to_string(),
+            name: self.from_name.clone(),
             kind,
             conditions,
-            next,
+            next: self.to_id.map(|to_id| {vec![to_id as u64]}),
         }
     }
 }

@@ -1,5 +1,6 @@
 use crate::domain::entities::{Execution, ExecutionStatus, Edge};
 use sqlx::{Transaction, Error, Postgres};
+use tracing::{debug, info, trace};
 
 pub struct ExecutionRepository;
 
@@ -65,14 +66,19 @@ impl ExecutionRepository {
     }
 
     pub async fn get_edges_by_workflow_id(tx: &mut Transaction<'_, Postgres>, workflow_id: i64, execution_id: i64) -> Result<Vec<Edge>, Error> {
+        info!("Fetching edges for workflow_id: {}, execution_id: {}", workflow_id, execution_id);
+
         sqlx::query_as!(
             Edge,
             r#"
                 select
                     n.id as from_id,
-                    array_agg(e.to_node_id::bigint) as "to_ids?: _",
+                    e.to_node_id to_id,
                     n.data as "from_data?: _",
                     n.type as from_type,
+                    n.key as from_key,
+                    n.name as from_name,
+                    n2.name as to_name,
                     e.condition as "condition?: _",
                     n.workflow_id,
                     el.output as "from_output?: _",
@@ -88,14 +94,6 @@ impl ExecutionRepository {
                     and el.execution_id = $1
                 where
                     n.workflow_id = $2
-                group by
-                    n.id,
-                    n.data,
-                    n.type,
-                    e.condition,
-                    n.workflow_id,
-                    el.output,
-                    el.id
             "#,
             execution_id,
             workflow_id,

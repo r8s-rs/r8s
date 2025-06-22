@@ -123,7 +123,18 @@ impl WorkflowRepository {
 
             let node_type = node_kind.get_type();
 
-            let conditions = Self::get_conditions_or_none(&node.conditions);
+            let data = match &node.kind {
+                NodeKind::SetV1(node) => {
+                    match &node.data {
+                        Value::Null => None,
+                        value => Some(value),
+                        _ => None
+                    }
+                },
+                _ => {
+                    None
+                }
+            };
 
             let node_inserted = sqlx::query!(
                 r#"
@@ -131,17 +142,20 @@ impl WorkflowRepository {
                     workflow_id,
                     name,
                     type,
-                    data
+                    data,
+                    key
                 ) values (
                     $1,
                     $2,
                     $3,
-                    $4
+                    $4,
+                    $5
                 ) returning id"#,
                 wf_id,
                 node.name,
                 node_type,
-                conditions,
+                data,
+                *node_key as i64,
             ).fetch_one(
                 &mut **tx,
             ).await;
@@ -170,16 +184,11 @@ impl WorkflowRepository {
         for (node_key, node) in &wf.nodes {
             let from_node_id = map_nodes[node_key];
 
-            info!(node_key, from_node_id);
+            info!(node_key, from_node_id, node.name);
 
             if let Some(edges) = &node.next {
                 for edge in edges {
-                    let to_node_id = map_nodes.get(edge);
-
-                    if to_node_id.is_none() {
-                        trace!(reason = "to_node_id not_found", node = edge);
-                        continue;
-                    }
+                    let to_node_id = map_nodes.get(edge).copied().unwrap_or(from_node_id);
 
                     let conditions = Self::get_conditions_or_none(&node.conditions);
 
