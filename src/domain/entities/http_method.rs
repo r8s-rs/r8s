@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-#[derive(Debug, sqlx::Type, PartialEq, Eq, Deserialize, Serialize, Clone)]
+#[derive(Debug, sqlx::Type, PartialEq, Eq, Deserialize, Serialize, Clone, Default)]
 #[sqlx(type_name = "webhook_method")]
 #[sqlx(rename_all = "lowercase")]
 pub enum HttpMethod {
+    #[default]
     #[serde(rename = "get")]
     Get,
     #[serde(rename = "post")]
