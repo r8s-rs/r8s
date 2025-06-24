@@ -1,8 +1,9 @@
 use crate::infrastructure::repositories::ExecutionLogRepository;
+use crate::application::TemplateRender;
 use crate::domain::entities::NodeBase;
 use serde::{Deserialize, Serialize};
 use sqlx::{Transaction, Postgres};
-use tera::{Tera, Context};
+use std::sync::{Arc, Mutex};
 use serde_json::Value;
 
 mod request;
@@ -27,7 +28,7 @@ impl HttpClientV1Node {
         ExecutionLogRepository::insert(tx, execution_id, node_id, output, error).await
     }
 
-    pub async fn execute(&self, tx: &mut Transaction<'_, Postgres>, execution_id: i64, execution_log_id: Option<i64>, node_id: i64, local_memory: &mut Value, tera: &mut Tera, node_name: &str, error: &mut Option<String>, memory: &mut Value) -> Option<Value> {
+    pub async fn execute(&self, tx: &mut Transaction<'_, Postgres>, execution_id: i64, execution_log_id: Option<i64>, node_id: i64, local_memory: &mut Value, template_render: Arc<Mutex<TemplateRender>>, node_name: &str, error: &mut Option<String>, memory: &mut Value) -> Option<Value> {
         if let Some(output) = local_memory["context"].get(node_name) {
             return Some(output.clone());
         }

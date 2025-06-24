@@ -14,5 +14,5 @@ pub struct State {
 
     // Recebe os workflows que serão salvos no banco de dados
     pub workflow_pendings: Arc<Mutex<VecDeque<Workflow>>>,
-    pub template_render: TemplateRender,
+    pub template_render: Arc<Mutex<TemplateRender>>,
 }
