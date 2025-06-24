@@ -66,22 +66,19 @@ impl ExecutionRepository {
     }
 
     pub async fn get_edges_by_workflow_id(tx: &mut Transaction<'_, Postgres>, workflow_id: i64, execution_id: i64) -> Result<Vec<Edge>, Error> {
-        info!("Fetching edges for workflow_id: {}, execution_id: {}", workflow_id, execution_id);
-
         sqlx::query_as!(
             Edge,
             r#"
                 select
                     n.id as from_id,
                     e.to_node_id to_id,
-                    n.data as "from_data?: _",
-                    n.type as from_type,
-                    n.key as from_key,
                     n.name as from_name,
-                    n2.name as to_name,
-                    e.condition as "condition?: _",
+                    n.data as from_data,
+                    n.type as from_type,
+                    el.output as from_output,
+                    el.error as from_error,
+                    e.condition,
                     n.workflow_id,
-                    el.output as "from_output?: _",
                     el.id as "execution_log_id?: _"
                 from
                     node n
@@ -89,16 +86,19 @@ impl ExecutionRepository {
                     n.id = e.from_node_id
                 join node n2 on
                     e.to_node_id = n2.id
+                join execution ex on
+                    n.workflow_id = ex.workflow_id
                 left join execution_log el on
-                    n.id = el.node_id
-                    and el.execution_id = $1
+                    ex.id = el.execution_id
+                    and el.node_id = n.id
                 where
-                    n.workflow_id = $2
+                    n.workflow_id = $1
+                    and ex.id = $2
+                order by
+                    n.key asc
             "#,
-            execution_id,
             workflow_id,
-        )
-        .fetch_all(&mut **tx)
-        .await
+            execution_id,
+        ).fetch_all(&mut **tx).await
     }
 }
