@@ -65,6 +65,7 @@ async fn main() -> std::io::Result<()> {
         keyspace: keyspace.clone(),
         partitions: partitions,
         workflow_pendings: Arc::new(Mutex::new(VecDeque::new())),
+        template_render: application::TemplateRender::new(),
     });
 
     actors::WorkflowToQueue {

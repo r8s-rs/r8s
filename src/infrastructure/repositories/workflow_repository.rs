@@ -124,8 +124,11 @@ impl WorkflowRepository {
             let node_type = node_kind.get_type();
 
             let data = match &node.kind {
+                NodeKind::HttpClientV1(node) => {
+                    Some(json!(node.data))
+                },
                 NodeKind::SetV1(node) => {
-                    match &node.data {
+                    match node.data.clone() {
                         Value::Null => None,
                         value => Some(value),
                         _ => None

@@ -5,16 +5,16 @@ use sqlx::{Transaction, Postgres};
 use tera::{Tera, Context};
 use serde_json::Value;
 
+mod request;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct SetV1Node {
-    #[serde(default)]
-    pub data: Value,
+pub struct HttpClientV1Node {
+    pub data: request::Request,
 }
 
-impl NodeBase for SetV1Node {
+impl NodeBase for HttpClientV1Node {
     fn get_type(&self) -> &'static str {
-        "SetV1"
+        "HttpClientV1"
     }
 
     fn is_trigger(&self) -> bool {
@@ -22,28 +22,22 @@ impl NodeBase for SetV1Node {
     }
 }
 
-impl SetV1Node {
+impl HttpClientV1Node {
     pub async fn save_execution_log(&self, tx: &mut Transaction<'_, Postgres>, execution_id: i64, node_id: i64, output: Option<Value>, error: Option<String>) -> Result<(), sqlx::Error> {
         ExecutionLogRepository::insert(tx, execution_id, node_id, output, error).await
     }
 
     pub async fn execute(&self, tx: &mut Transaction<'_, Postgres>, execution_id: i64, execution_log_id: Option<i64>, node_id: i64, local_memory: &mut Value, tera: &mut Tera, node_name: &str, error: &mut Option<String>, memory: &mut Value) -> Option<Value> {
         if let Some(output) = local_memory["context"].get(node_name) {
-            println!("   ➥ SetV1: output ja existe");
-
-            dbg!(self.data.clone());
             return Some(output.clone());
         }
 
-        let template = self.data.to_string();
+        /*let template = self.data.to_string();
 
         let template = template.as_str();
 
-        dbg!(&template);
-
         match Context::from_value(local_memory["context"].clone()) {
-            Ok(context) => {
-                dbg!(&context);
+            Ok(context) => {                            
                 match tera.render_str(template, &context) {
                     Ok(rendered) => {
                         let rendered = rendered.as_str();
@@ -52,7 +46,7 @@ impl SetV1Node {
                         memory["context"][node_name] = local_memory["context"][node_name].clone();
                     }
                     Err(e) => {
-                        println!("   ➥ Erro ao renderizar SetV1: {}", e);
+                        println!("   ➥ Erro ao renderizar: {}", e);
                         *error = Some(e.to_string());
                         memory["context_errors"][node_name] = e.to_string().into();
                     }
@@ -78,6 +72,8 @@ impl SetV1Node {
             ).await;
         }
 
-        output
+        output*/
+
+        None
     }
 }

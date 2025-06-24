@@ -79,6 +79,7 @@ impl Actor for WebhookV1ToExecution {
                                     }
                                 }
                                 Ok(false) => {
+                                    let _ = webhook_v1_pendings.remove(wf_id);
                                     warn!("workflow não encontrado");
                                 }
                                 Err(e) => {
@@ -98,7 +99,7 @@ impl Actor for WebhookV1ToExecution {
                                 Ok(()) => {
                                     match tx.commit().await {
                                         Ok(_) => {
-                                            info!("Foram inseridas [{}] novas execuções para o Workflow [{wf_id}]", map_insert.len());
+                                            info!("Foram inseridas [{}] novas execuções para o Workflow [{wf_id}]", inserts.len());
 
                                             for key in map_insert.keys() {
                                                 match partitions.webhook_v1_pendings.remove(key) {
