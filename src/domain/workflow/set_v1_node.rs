@@ -29,6 +29,9 @@ impl SetV1Node {
 
     pub async fn execute(&self, tx: &mut Transaction<'_, Postgres>, execution_id: i64, execution_log_id: Option<i64>, node_id: i64, local_memory: &mut Value, tera: &mut Tera, node_name: &str, error: &mut Option<String>, memory: &mut Value) -> Option<Value> {
         if let Some(output) = local_memory["context"].get(node_name) {
+            println!("   ➥ SetV1: output ja existe");
+
+            dbg!(self.data.clone());
             return Some(output.clone());
         }
 
@@ -36,8 +39,11 @@ impl SetV1Node {
 
         let template = template.as_str();
 
+        dbg!(&template);
+
         match Context::from_value(local_memory["context"].clone()) {
-            Ok(context) => {                            
+            Ok(context) => {
+                dbg!(&context);
                 match tera.render_str(template, &context) {
                     Ok(rendered) => {
                         let rendered = rendered.as_str();
@@ -46,7 +52,7 @@ impl SetV1Node {
                         memory["context"][node_name] = local_memory["context"][node_name].clone();
                     }
                     Err(e) => {
-                        println!("   ➥ Erro ao renderizar: {}", e);
+                        println!("   ➥ Erro ao renderizar SetV1: {}", e);
                         *error = Some(e.to_string());
                         memory["context_errors"][node_name] = e.to_string().into();
                     }
