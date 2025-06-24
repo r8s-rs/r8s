@@ -5,6 +5,7 @@ use serde_json::Value;
 use tracing::error;
 use crate::domain::workflow::{
     ManualTriggerV1Node,
+    HttpClientV1Node,
     DoNothingV1Node,
     WebhookV1Node,
     UnknownNode,
@@ -16,14 +17,13 @@ use crate::domain::workflow::{
 pub struct Edge {
     pub workflow_id: i64,
     pub from_id: i64,
-    pub to_id: Option<i64>,
+    pub to_id: i64,
     pub from_data: Option<Value>,
-    pub from_key: i64,
     pub from_name: String,
-    pub to_name: String,
     pub condition: Option<Value>,
     pub from_type: String,
     pub from_output: Option<Value>,
+    pub from_error: Option<String>,
     pub execution_log_id: Option<i64>,
 }
 
@@ -50,6 +50,9 @@ impl Edge {
 
                 NodeKind::WebhookV1(wh.unwrap().unwrap())
             }
+            "HttpClientV1" => NodeKind::HttpClientV1(HttpClientV1Node {
+                data: serde_json::from_value(data).unwrap()
+            }),
             _ => NodeKind::Unknown,
         };
 
@@ -70,7 +73,7 @@ impl Edge {
             name: self.from_name.clone(),
             kind,
             conditions,
-            next: self.to_id.map(|to_id| {vec![to_id as u64]}),
+            next: Some(vec![self.to_id as u64]),
         }
     }
 }

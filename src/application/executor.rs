@@ -64,20 +64,52 @@ impl Executor {
 
                     self.memory["context"][&node.name] = self.initial_input.clone();
 
-                    if let Some(to_id) = edge.to_id {
-                        self.history.insert(
-                            to_id,
-                            edge.from_id,
-                        );
-                    }
+                    self.history.entry(edge.to_id).or_insert(edge.from_id);
                 }
-                NodeKind::SetV1(set_node) => {
-                    info!("SetV1: [{}]", self.execution_id);
+                NodeKind::HttpClientV1(http_client_node) => {
+                    info!("HttpClientV1: [{}]", self.execution_id);
+                    let mut memory = self.get_context(
+                        edge.to_id,
+                        edges,
+                    );
 
+                    dbg!(memory);
+
+                    //dbg!(&self.memory);
+                    /*
                     let mut memory = self.get_context(
                         edge.to_id.unwrap_or(*node_key as i64),
                         edges,
                     );
+                    
+                    dbg!(&memory);
+                    
+                    let mut error = None::<String>;
+                    
+                    let _ = http_client_node.execute(
+                        tx,
+                        self.execution_id,
+                        edge.execution_log_id,
+                        *node_key as i64,
+                        &mut memory,
+                        &mut tera,
+                        &node.name,
+                        &mut error,
+                        &mut self.memory,
+                    );
+                    */
+                }
+                NodeKind::SetV1(set_node) => {
+                    info!("SetV1: [{}]", self.execution_id);
+
+                    dbg!(edge.to_id, node_key);
+
+                    let mut memory = self.get_context(
+                        edge.from_id,
+                        edges,
+                    );
+
+                    //dbg!(&memory);
 
                     let mut error = None::<String>;
 
@@ -92,7 +124,10 @@ impl Executor {
                         &mut error,
                         &mut self.memory,
                     ).await;
-                    
+
+                    //dbg!(&self.memory);
+
+                    self.history.entry(edge.to_id).or_insert(edge.from_id);
                 }
                 NodeKind::IfV1(node) => {
                     println!("   ➥ If");
@@ -109,8 +144,17 @@ impl Executor {
 
         if let Some(back_id) = self.history.get(&from_id) {
             if let Some(edge) = edges.get(&back_id) {
-                info!("Recuperando contexto de: {} -> {}", edge.from_name, edge.to_name);
-                memory["context"]["last"] = self.memory["context"][&edge.from_name].clone();
+                info!("Recuperando contexto de: {}", edge.from_name);
+                match self.memory["context"][&edge.from_name].clone() {
+                    Value::Null => {
+                        info!("Contexto não encontrado para: {}", edge.from_name);
+                        memory["context"]["last"] = json!({});
+                    }
+                    value => {
+                        info!("Contexto encontrado: {}", value);
+                        memory["context"]["last"] = value;
+                    }   
+                }
             }
         }
 

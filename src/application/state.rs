@@ -1,8 +1,8 @@
 use crate::infrastructure::repositories::Workflow;
+use super::{Partitions, TemplateRender};
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use sqlx::{Postgres, Pool};
-use super::Partitions;
 use fjall::Keyspace;
 
 
@@ -14,4 +14,5 @@ pub struct State {
 
     // Recebe os workflows que serão salvos no banco de dados
     pub workflow_pendings: Arc<Mutex<VecDeque<Workflow>>>,
+    pub template_render: TemplateRender,
 }
