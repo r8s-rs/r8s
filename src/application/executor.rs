@@ -1,8 +1,7 @@
-use crate::infrastructure::repositories::Workflow;
+use crate::{application::TemplateRender, infrastructure::repositories::Workflow};
+use std::{collections::BTreeMap, sync::{Arc, Mutex}};
 use sqlx::{Transaction, Postgres};
-use std::collections::BTreeMap;
 use serde_json::{Value, json};
-use tera::{Tera, Context};
 use tracing::info;
 use crate::domain::entities::{
     ExecutionStatus,
@@ -12,6 +11,7 @@ use crate::domain::entities::{
 
 pub struct Executor {
     pub workflow: Workflow,
+    pub template_render: Arc<Mutex<TemplateRender>>,
     pub initial_input: Value,
     pub execution_id: i64,
     history: BTreeMap<i64, i64>,
@@ -19,12 +19,13 @@ pub struct Executor {
 }
 
 impl Executor {
-    pub fn new(workflow: Workflow, initial_input: Value, execution_id: i64) -> Self {
+    pub fn new(workflow: Workflow, initial_input: Value, execution_id: i64, template_render: Arc<Mutex<TemplateRender>>) -> Self {
         Self {
             workflow,
             initial_input,
             execution_id,
             history: BTreeMap::new(),
+            template_render,
             memory: json!({
                 "context": {
                     "last": {},
@@ -35,8 +36,6 @@ impl Executor {
     }
 
     pub async fn run(&mut self, tx: &mut Transaction<'_, Postgres>, edges: &BTreeMap<i64, Edge>) -> Result<ExecutionStatus, String> {
-        let mut tera = Tera::default();
-
         for (node_key, node) in &self.workflow.nodes {
             info!("Executando nó: [{}] - {}", node_key, node.name);
 
@@ -119,7 +118,7 @@ impl Executor {
                         edge.execution_log_id,
                         *node_key as i64,
                         &mut memory,
-                        &mut tera,
+                        self.template_render.clone(),
                         &node.name,
                         &mut error,
                         &mut self.memory,

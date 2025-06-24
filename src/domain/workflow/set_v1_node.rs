@@ -1,8 +1,8 @@
-use crate::infrastructure::repositories::ExecutionLogRepository;
+use crate::{application::TemplateRender, infrastructure::repositories::ExecutionLogRepository};
 use crate::domain::entities::NodeBase;
 use serde::{Deserialize, Serialize};
 use sqlx::{Transaction, Postgres};
-use tera::{Tera, Context};
+use std::sync::{Arc, Mutex};
 use serde_json::Value;
 
 
@@ -27,11 +27,9 @@ impl SetV1Node {
         ExecutionLogRepository::insert(tx, execution_id, node_id, output, error).await
     }
 
-    pub async fn execute(&self, tx: &mut Transaction<'_, Postgres>, execution_id: i64, execution_log_id: Option<i64>, node_id: i64, local_memory: &mut Value, tera: &mut Tera, node_name: &str, error: &mut Option<String>, memory: &mut Value) -> Option<Value> {
+    pub async fn execute(&self, tx: &mut Transaction<'_, Postgres>, execution_id: i64, execution_log_id: Option<i64>, node_id: i64, local_memory: &mut Value, template_render: Arc<Mutex<TemplateRender>>, node_name: &str, error: &mut Option<String>, memory: &mut Value) -> Option<Value> {
         if let Some(output) = local_memory["context"].get(node_name) {
             println!("   ➥ SetV1: output ja existe");
-
-            dbg!(self.data.clone());
             return Some(output.clone());
         }
 
@@ -39,31 +37,19 @@ impl SetV1Node {
 
         let template = template.as_str();
 
-        dbg!(&template);
+        let mut template_render = template_render.lock().unwrap();
 
-        match Context::from_value(local_memory["context"].clone()) {
-            Ok(context) => {
-                dbg!(&context);
-                match tera.render_str(template, &context) {
-                    Ok(rendered) => {
-                        let rendered = rendered.as_str();
-
-                        local_memory["context"][node_name] = serde_json::from_str(rendered).unwrap();
-                        memory["context"][node_name] = local_memory["context"][node_name].clone();
-                    }
-                    Err(e) => {
-                        println!("   ➥ Erro ao renderizar SetV1: {}", e);
-                        *error = Some(e.to_string());
-                        memory["context_errors"][node_name] = e.to_string().into();
-                    }
-                }
+        match template_render.render_str(template, local_memory["context"].clone()) {
+            Ok(rendered) => {
+                local_memory["context"][node_name] = serde_json::from_str(rendered.as_str()).unwrap();
+                memory["context"][node_name] = local_memory["context"][node_name].clone();
             }
             Err(e) => {
-                println!("   ➥ Erro ao criar contexto: {}", e);
+                println!("   ➥ Erro ao renderizar SetV1: {}", e);
                 *error = Some(e.to_string());
-
                 memory["context_errors"][node_name] = e.to_string().into();
             }
+            
         }
 
         let output = local_memory["context"].get(node_name).cloned();

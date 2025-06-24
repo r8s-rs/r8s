@@ -20,8 +20,12 @@ impl Actor for WorkflowToQueue {
 
         let db = self.state.db.clone();
 
+        let template_render = self.state.template_render.clone();
+
         ctx.run_interval(Duration::from_secs(10), move |_actor, ctx| {
             let db = db.clone();
+
+            let mut template_render = template_render.clone();
 
             // aqui verificar uso de memoria ram e cpu antes de pegar novas tarefas, o usuário deverá específicar a lógica usando variaveis de ambiente
 
@@ -80,7 +84,9 @@ impl Actor for WorkflowToQueue {
                                 nodes,
                             };
 
-                            let mut executor = Executor::new(wf, execution.input, execution.id);
+                            info!("[WorkflowToQueue] Workflow carregado: {}", execution.workflow_id);
+
+                            let mut executor = Executor::new(wf, execution.input, execution.id, template_render.clone());
 
                             match executor.run(&mut tx, &edges).await {
                                 Ok(ExecutionStatus::Success) => {
